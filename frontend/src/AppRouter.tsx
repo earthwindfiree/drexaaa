@@ -2,7 +2,20 @@ import { BrowserRouter, Route, Routes } from 'react-router-dom'
 import { AuthProvider } from './features/auth/AuthProvider'
 import AuthPage from './features/auth/AuthPage'
 import { GuestRoute, ProtectedRoute } from './features/auth/RouteGuards'
+import AdminLayout from './layouts/AdminLayout'
 import AppLayout from './layouts/AppLayout'
+import AdminDashboardPage from './pages/AdminDashboardPage'
+import AdminAccountDetailPage from './pages/AdminAccountDetailPage'
+import AdminAccountsPage from './pages/AdminAccountsPage'
+import AdminUsersPage from './pages/AdminUsersPage'
+import AdminMarketsPage from './pages/AdminMarketsPage'
+import AdminDepositDetailPage from './pages/AdminDepositDetailPage'
+import AdminDepositsPage from './pages/AdminDepositsPage'
+import AdminWithdrawalDetailPage from './pages/AdminWithdrawalDetailPage'
+import AdminWithdrawalsPage from './pages/AdminWithdrawalsPage'
+import AdminTransactionsPage from './pages/AdminTransactionsPage'
+import AdminAuditLogsPage from './pages/AdminAuditLogsPage'
+import AdminTiersPage from './pages/AdminTiersPage'
 import HomePage from './pages/HomePage'
 import NotFoundPage from './pages/NotFoundPage'
 import RoutePlaceholder from './components/RoutePlaceholder'
@@ -48,7 +61,21 @@ function AppRouter() {
               {userRoutes.map((route) => (
                 <Route key={route.path} path={route.path} element={<RoutePlaceholder title={route.title} />} />
               ))}
-              {adminRoutes.map((route) => (
+            </Route>
+            <Route element={<AdminLayout />}>
+              <Route path="/admin" element={<AdminDashboardPage />} />
+              <Route path="/admin/users" element={<AdminUsersPage />} />
+              <Route path="/admin/accounts" element={<AdminAccountsPage />} />
+              <Route path="/admin/accounts/:accountId" element={<AdminAccountDetailPage />} />
+              <Route path="/admin/markets" element={<AdminMarketsPage />} />
+              <Route path="/admin/deposits" element={<AdminDepositsPage />} />
+              <Route path="/admin/deposits/:depositId" element={<AdminDepositDetailPage />} />
+              <Route path="/admin/withdrawals" element={<AdminWithdrawalsPage />} />
+              <Route path="/admin/withdrawals/:withdrawalId" element={<AdminWithdrawalDetailPage />} />
+              <Route path="/admin/transactions" element={<AdminTransactionsPage />} />
+              <Route path="/admin/audit-logs" element={<AdminAuditLogsPage />} />
+              <Route path="/admin/tiers" element={<AdminTiersPage />} />
+              {adminRoutes.filter((route) => route.path !== '/admin' && route.path !== '/admin/users' && route.path !== '/admin/accounts' && route.path !== '/admin/markets' && route.path !== '/admin/deposits' && route.path !== '/admin/withdrawals' && route.path !== '/admin/transactions' && route.path !== '/admin/audit-logs' && route.path !== '/admin/tiers').map((route) => (
                 <Route key={route.path} path={route.path} element={<RoutePlaceholder title={route.title} />} />
               ))}
             </Route>
