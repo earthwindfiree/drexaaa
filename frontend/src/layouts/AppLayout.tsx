@@ -19,7 +19,11 @@ function AppLayout() {
   const navigate = useNavigate()
   const [logoutError, setLogoutError] = useState<string | null>(null)
   const [loggingOut, setLoggingOut] = useState(false)
-  const navigation = user ? userNavigation : guestNavigation
+  const navigation = user
+    ? user.role === 'admin' || user.role === 'super_admin'
+      ? userNavigation
+      : userNavigation.filter((item) => item.to !== '/admin')
+    : guestNavigation
 
   async function handleLogout() {
     setLoggingOut(true)

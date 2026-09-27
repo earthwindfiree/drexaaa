@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use LogicException;
 
 #[Fillable([
     'name',
@@ -26,6 +27,15 @@ class Tier extends Model
             'feature_access' => 'array',
             'display_settings' => 'array',
         ];
+    }
+
+    protected static function booted(): void
+    {
+        static::deleting(function (Tier $tier): void {
+            if ($tier->accounts()->exists()) {
+                throw new LogicException('A tier assigned to accounts cannot be deleted.');
+            }
+        });
     }
 
     public function strategy(): BelongsTo
