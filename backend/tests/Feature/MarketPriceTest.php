@@ -28,12 +28,15 @@ class MarketPriceTest extends TestCase
 {
     use RefreshDatabase;
 
+    private User $admin;
+
     protected function setUp(): void
     {
         parent::setUp();
         $this->seed(StrategyTierSeeder::class);
         $this->seed(AssetSeeder::class);
         $this->seed(MarketPriceSeeder::class);
+        $this->admin = User::factory()->create(['role' => 'admin']);
     }
 
     public function test_seeded_current_price_is_retrievable(): void
@@ -48,7 +51,7 @@ class MarketPriceTest extends TestCase
     public function test_price_updates_normalize_decimals_and_allow_negative_24h_change(): void
     {
         $ltc = Asset::where('symbol', 'LTC')->firstOrFail();
-        $marketPrice = app(MarketPriceService::class)->update($ltc, '88.125', '-1.2575');
+        $marketPrice = app(MarketPriceService::class)->update($this->admin, $ltc, '88.125', '-1.2575');
 
         $this->assertSame('88.12500000', $marketPrice->current_price);
         $this->assertSame('-1.2575', $marketPrice->change_24h_percentage);
@@ -59,13 +62,13 @@ class MarketPriceTest extends TestCase
         $asset = Asset::where('symbol', 'ETH')->firstOrFail();
 
         try {
-            app(MarketPriceService::class)->update($asset, '0', '1.0000');
+            app(MarketPriceService::class)->update($this->admin, $asset, '0', '1.0000');
             $this->fail('A zero simulated price must be rejected.');
         } catch (ValidationException) {
         }
 
         $this->expectException(ValidationException::class);
-        app(MarketPriceService::class)->update($asset, '2.123456789', '1.0000');
+        app(MarketPriceService::class)->update($this->admin, $asset, '2.123456789', '1.0000');
     }
 
     public function test_inactive_assets_keep_readable_and_updatable_price_records(): void
@@ -73,7 +76,7 @@ class MarketPriceTest extends TestCase
         $asset = Asset::where('symbol', 'ETH')->firstOrFail();
         $asset->update(['active' => false]);
 
-        $updated = app(MarketPriceService::class)->update($asset, '3000', '-2.5');
+        $updated = app(MarketPriceService::class)->update($this->admin, $asset, '3000', '-2.5');
         $providedPrice = app(AssetPriceProvider::class)->currentUsdPriceFor($asset);
 
         $this->assertFalse($asset->fresh()->active);
@@ -87,7 +90,7 @@ class MarketPriceTest extends TestCase
 
         $this->assertSame('1.00000000', app(AssetPriceProvider::class)->currentUsdPriceFor($asset));
 
-        app(MarketPriceService::class)->update($asset, '0.998', '-0.1200');
+        app(MarketPriceService::class)->update($this->admin, $asset, '0.998', '-0.1200');
 
         $this->assertSame('0.99800000', app(AssetPriceProvider::class)->currentUsdPriceFor($asset));
     }
@@ -107,6 +110,7 @@ class MarketPriceTest extends TestCase
         $depositTransaction = $deposit->fresh()->transaction;
         $withdrawalTransaction = $approvedWithdrawal->transaction;
         $snapshot = app(PerformanceSnapshotService::class)->create(
+            $this->admin,
             $account->fresh(),
             '1250.00',
             '250.00',
@@ -122,7 +126,7 @@ class MarketPriceTest extends TestCase
             'snapshot' => [$snapshot->managed_balance, $snapshot->total_profit_loss, $snapshot->performance_percentage],
         ];
 
-        app(MarketPriceService::class)->update($asset, '70000', '4.2500');
+        app(MarketPriceService::class)->update($this->admin, $asset, '70000', '4.2500');
 
         $this->assertSame($historicalValues['deposit'], [$deposit->fresh()->price_snapshot, $deposit->fresh()->usd_value]);
         $this->assertSame($historicalValues['withdrawal'], [$withdrawal->fresh()->price_snapshot, $withdrawal->fresh()->crypto_amount]);
@@ -158,7 +162,7 @@ class MarketPriceTest extends TestCase
             'tier_id',
         ]);
 
-        app(MarketPriceService::class)->update($asset, '70000', '-3.0000');
+        app(MarketPriceService::class)->update($this->admin, $asset, '70000', '-3.0000');
 
         $this->assertSame($currentState, $account->fresh()->only(array_keys($currentState)));
         $this->assertDatabaseCount('transactions', 0);

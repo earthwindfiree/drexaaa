@@ -46,6 +46,16 @@ class User extends Authenticatable
         return $this->hasMany(SupportRequest::class);
     }
 
+    public function auditLogs(): HasMany
+    {
+        return $this->hasMany(AuditLog::class);
+    }
+
+    public function actedAuditLogs(): HasMany
+    {
+        return $this->hasMany(AuditLog::class, 'actor_id');
+    }
+
     protected function casts(): array
     {
         return [

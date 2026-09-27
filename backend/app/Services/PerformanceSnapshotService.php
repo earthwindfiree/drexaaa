@@ -4,15 +4,20 @@ namespace App\Services;
 
 use App\Models\Account;
 use App\Models\PerformanceSnapshot;
+use App\Models\User;
 use App\Support\FixedDecimalMath;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 use InvalidArgumentException;
 
 class PerformanceSnapshotService
 {
+    public function __construct(private readonly AuditLogService $auditLogService) {}
+
     public function create(
+        User $actor,
         Account $account,
         string $managedBalance,
         string $totalProfitLoss,
@@ -30,15 +35,31 @@ class PerformanceSnapshotService
         }
 
         try {
-            $snapshot = new PerformanceSnapshot;
-            $snapshot->account()->associate($account);
-            $snapshot->managed_balance = $managedBalance;
-            $snapshot->total_profit_loss = $totalProfitLoss;
-            $snapshot->performance_percentage = $performancePercentage;
-            $snapshot->snapshot_at = $snapshotAt;
-            $snapshot->save();
+            return DB::transaction(function () use ($actor, $account, $managedBalance, $totalProfitLoss, $performancePercentage, $snapshotAt): PerformanceSnapshot {
+                $snapshot = new PerformanceSnapshot;
+                $snapshot->account()->associate($account);
+                $snapshot->managed_balance = $managedBalance;
+                $snapshot->total_profit_loss = $totalProfitLoss;
+                $snapshot->performance_percentage = $performancePercentage;
+                $snapshot->snapshot_at = $snapshotAt;
+                $snapshot->save();
 
-            return $snapshot;
+                $this->auditLogService->record(
+                    $actor,
+                    'performance_snapshot.created',
+                    $account->user,
+                    $snapshot,
+                    newValues: [
+                        'account_id' => $account->getKey(),
+                        'managed_balance' => $snapshot->managed_balance,
+                        'total_profit_loss' => $snapshot->total_profit_loss,
+                        'performance_percentage' => $snapshot->performance_percentage,
+                        'snapshot_at' => $snapshot->snapshot_at->toISOString(),
+                    ],
+                );
+
+                return $snapshot;
+            }, 3);
         } catch (QueryException $exception) {
             if (str_contains(strtolower($exception->getMessage()), 'unique')) {
                 throw ValidationException::withMessages([
