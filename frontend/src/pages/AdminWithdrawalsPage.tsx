@@ -1,0 +1,42 @@
+import { useEffect, useState, type FormEvent } from 'react'
+import { Link, useSearchParams } from 'react-router-dom'
+import { ApiError, apiRequest } from '../lib/api'
+import type { AdminMarketAsset, AdminWithdrawalListItem, AdminWithdrawalsResponse } from '../types/api'
+
+function AdminWithdrawalsPage() {
+  const [searchParams, setSearchParams] = useSearchParams()
+  const [withdrawals, setWithdrawals] = useState<AdminWithdrawalListItem[]>([])
+  const [assets, setAssets] = useState<AdminMarketAsset[]>([])
+  const [meta, setMeta] = useState<AdminWithdrawalsResponse['meta'] | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [searchInput, setSearchInput] = useState(searchParams.get('search') ?? '')
+
+  useEffect(() => { void apiRequest<{ data: AdminMarketAsset[] }>('/api/admin/markets').then((response) => setAssets(response.data)).catch(() => undefined) }, [])
+  useEffect(() => {
+    let active = true
+    const query = searchParams.toString()
+    void apiRequest<AdminWithdrawalsResponse>(query ? `/api/admin/withdrawals?${query}` : '/api/admin/withdrawals')
+      .then((response) => { if (active) { setWithdrawals(response.data); setMeta(response.meta) } })
+      .catch((requestError: unknown) => { if (active) { setError(errorMessage(requestError, 'Unable to load withdrawals.')); setWithdrawals([]); setMeta(null) } })
+      .finally(() => { if (active) setLoading(false) })
+    return () => { active = false }
+  }, [searchParams])
+
+  const status = searchParams.get('status') ?? 'pending'
+  const assetId = searchParams.get('asset_id') ?? ''
+  function applyFilters(event: FormEvent<HTMLFormElement>) { event.preventDefault(); setLoading(true); setError(null); const next = new URLSearchParams(); const search = searchInput.trim(); if (status) next.set('status', status); if (assetId) next.set('asset_id', assetId); if (search) next.set('search', search); next.set('page', '1'); setSearchParams(next) }
+  function updateFilter(name: 'status' | 'asset_id', value: string) { setLoading(true); setError(null); const next = new URLSearchParams(searchParams); if (value) next.set(name, value); else next.delete(name); next.set('page', '1'); setSearchParams(next) }
+  function clearFilters() { setLoading(true); setError(null); setSearchInput(''); setSearchParams({ status: 'pending', page: '1' }) }
+  function goToPage(page: number) { setLoading(true); setError(null); const next = new URLSearchParams(searchParams); next.set('page', String(page)); setSearchParams(next) }
+
+  return <section className="mx-auto max-w-7xl px-6 py-10 lg:px-8"><div className="mb-8"><p className="text-sm font-semibold uppercase tracking-[0.18em] text-cyan-700">Withdrawal review</p><h1 className="mt-2 text-3xl font-semibold tracking-tight text-slate-950">Withdrawals</h1><p className="mt-2 max-w-2xl text-sm text-slate-600">Review reserved withdrawals before releasing or rejecting the requested amount.</p></div><form onSubmit={applyFilters} className="mb-6 grid gap-3 border border-slate-200 bg-white p-4 shadow-sm md:grid-cols-[minmax(0,2fr)_1fr_1fr_auto_auto]"><label className="text-sm text-slate-600">User search<input value={searchInput} onChange={(event) => setSearchInput(event.target.value)} placeholder="Name or email" className="mt-1 block w-full border border-slate-300 px-3 py-2 text-sm text-slate-950 outline-none focus:border-cyan-600" /></label><label className="text-sm text-slate-600">Status<select value={status} onChange={(event) => updateFilter('status', event.target.value)} className="mt-1 block w-full border border-slate-300 bg-white px-3 py-2 text-sm text-slate-950 outline-none focus:border-cyan-600"><option value="">All statuses</option><option value="pending">Pending</option><option value="approved">Approved</option><option value="rejected">Rejected</option></select></label><label className="text-sm text-slate-600">Asset<select value={assetId} onChange={(event) => updateFilter('asset_id', event.target.value)} className="mt-1 block w-full border border-slate-300 bg-white px-3 py-2 text-sm text-slate-950 outline-none focus:border-cyan-600"><option value="">All assets</option>{assets.map((asset) => <option key={asset.id} value={asset.id}>{asset.symbol}</option>)}</select></label><button type="submit" className="self-end bg-slate-950 px-4 py-2 text-sm font-semibold text-white">Apply</button><button type="button" onClick={clearFilters} className="self-end border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700">Clear</button></form>{loading && <p className="border border-slate-200 bg-white p-6 text-sm text-slate-600">Loading withdrawals...</p>}{!loading && error && <div role="alert" className="border border-rose-200 bg-rose-50 p-6 text-sm text-rose-800">{error}</div>}{!loading && !error && withdrawals.length === 0 && <div className="border border-slate-200 bg-white p-10 text-center shadow-sm"><h2 className="text-lg font-semibold text-slate-950">No withdrawals found</h2><p className="mt-2 text-sm text-slate-600">Try changing the status, asset, or user search.</p></div>}{!loading && !error && withdrawals.length > 0 && <><div className="overflow-x-auto border border-slate-200 bg-white shadow-sm"><table className="w-full min-w-[1050px] text-left text-sm"><thead className="border-b border-slate-200 bg-slate-50 text-xs uppercase tracking-[0.12em] text-slate-500"><tr><th className="px-4 py-3 font-semibold">User</th><th className="px-4 py-3 font-semibold">Asset</th><th className="px-4 py-3 font-semibold">USD amount</th><th className="px-4 py-3 font-semibold">Crypto amount</th><th className="px-4 py-3 font-semibold">Status</th><th className="px-4 py-3 font-semibold">Submitted</th><th className="px-4 py-3 font-semibold">Destination</th></tr></thead><tbody className="divide-y divide-slate-100">{withdrawals.map((withdrawal) => <WithdrawalRow key={withdrawal.id} withdrawal={withdrawal} />)}</tbody></table></div>{meta && <Pagination meta={meta} onPageChange={goToPage} />}</>}</section>
+}
+
+function WithdrawalRow({ withdrawal }: { withdrawal: AdminWithdrawalListItem }) { return <tr className="align-top text-slate-700"><td className="px-4 py-4"><Link to={`/admin/withdrawals/${withdrawal.id}`} className="font-semibold text-cyan-700 hover:text-cyan-900">{withdrawal.user?.name ?? 'Unknown user'}</Link><p className="mt-1 text-xs text-slate-500">{withdrawal.user?.email ?? 'No email'}</p></td><td className="px-4 py-4 font-medium text-slate-950">{withdrawal.asset?.symbol ?? 'N/A'}</td><td className="px-4 py-4 font-medium text-slate-950">${withdrawal.amount}</td><td className="px-4 py-4">{withdrawal.crypto_amount ?? 'Not available'}</td><td className="px-4 py-4"><StatusBadge status={withdrawal.status} /></td><td className="px-4 py-4 whitespace-nowrap">{formatDate(withdrawal.created_at)}</td><td className="max-w-[240px] break-all px-4 py-4 text-xs">{withdrawal.destination_wallet}</td></tr> }
+function StatusBadge({ status }: { status: string }) { const style = status === 'pending' ? 'bg-amber-50 text-amber-700' : status === 'approved' ? 'bg-emerald-50 text-emerald-700' : 'bg-rose-50 text-rose-700'; return <span className={`inline-block px-2 py-1 text-xs font-semibold capitalize ${style}`}>{status}</span> }
+function Pagination({ meta, onPageChange }: { meta: AdminWithdrawalsResponse['meta']; onPageChange: (page: number) => void }) { return <div className="flex flex-wrap items-center justify-between gap-3 px-1 py-4 text-sm text-slate-600"><p>{meta.from ?? 0}-{meta.to ?? 0} of {meta.total}</p><div className="flex items-center gap-2"><button type="button" disabled={meta.current_page <= 1} onClick={() => onPageChange(meta.current_page - 1)} className="border border-slate-300 px-3 py-2 font-medium disabled:opacity-40">Previous</button><span className="px-2">Page {meta.current_page} of {meta.last_page}</span><button type="button" disabled={meta.current_page >= meta.last_page} onClick={() => onPageChange(meta.current_page + 1)} className="border border-slate-300 px-3 py-2 font-medium disabled:opacity-40">Next</button></div></div> }
+function formatDate(value: string): string { return new Intl.DateTimeFormat('en', { dateStyle: 'medium' }).format(new Date(value)) }
+function errorMessage(error: unknown, fallback: string): string { if (error instanceof ApiError && Object.values(error.errors).length > 0) return Object.values(error.errors).flat().join(' '); return error instanceof Error ? error.message : fallback }
+
+export default AdminWithdrawalsPage

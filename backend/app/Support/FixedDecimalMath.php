@@ -7,6 +7,57 @@ use OverflowException;
 
 final class FixedDecimalMath
 {
+    public static function normalizeSigned(string|int $value, int $maxIntegerDigits, int $scale, string $field): string
+    {
+        $value = (string) $value;
+
+        if (! preg_match('/\A-?\d{1,'.$maxIntegerDigits.'}(?:\.\d{1,'.$scale.'})?\z/', $value)) {
+            throw new InvalidArgumentException("{$field} must be a signed decimal with at most {$scale} fractional digits.");
+        }
+
+        $negative = str_starts_with($value, '-');
+        $normalized = self::normalize($negative ? substr($value, 1) : $value, $maxIntegerDigits, $scale, $field);
+
+        return $negative && ! self::isZero($normalized) ? '-'.$normalized : $normalized;
+    }
+
+    public static function subtractSigned(string|int $left, string|int $right, int $maxIntegerDigits, int $scale): string
+    {
+        $left = self::normalizeSigned($left, $maxIntegerDigits, $scale, 'left operand');
+        $right = self::normalizeSigned($right, $maxIntegerDigits, $scale, 'right operand');
+        $leftNegative = str_starts_with($left, '-');
+        $rightNegative = str_starts_with($right, '-');
+        $leftAbsolute = $leftNegative ? substr($left, 1) : $left;
+        $rightAbsolute = $rightNegative ? substr($right, 1) : $right;
+
+        if ($leftNegative !== $rightNegative) {
+            $sum = self::add(
+                $leftAbsolute,
+                $rightAbsolute,
+                $maxIntegerDigits,
+                $scale,
+            );
+
+            return $leftNegative ? '-'.$sum : $sum;
+        }
+
+        $comparison = self::compareIntegers(
+            self::scaledInteger($leftAbsolute),
+            self::scaledInteger($rightAbsolute),
+        );
+
+        if ($comparison === 0) {
+            return self::formatScaledInteger('0', $maxIntegerDigits, $scale);
+        }
+
+        $larger = $comparison > 0 ? $leftAbsolute : $rightAbsolute;
+        $smaller = $comparison > 0 ? $rightAbsolute : $leftAbsolute;
+        $difference = self::subtractNonNegative($larger, $smaller, $maxIntegerDigits, $scale);
+        $resultNegative = $comparison > 0 ? $leftNegative : ! $leftNegative;
+
+        return $resultNegative ? '-'.$difference : $difference;
+    }
+
     public static function normalize(string $value, int $maxIntegerDigits, int $scale, string $field): string
     {
         if ($maxIntegerDigits < 1 || $scale < 1) {

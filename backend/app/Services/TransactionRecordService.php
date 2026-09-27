@@ -6,6 +6,7 @@ use App\Enums\DepositStatus;
 use App\Enums\TransactionStatus;
 use App\Enums\TransactionType;
 use App\Enums\WithdrawalStatus;
+use App\Models\Account;
 use App\Models\Deposit;
 use App\Models\Transaction;
 use App\Models\Withdrawal;
@@ -14,6 +15,22 @@ use LogicException;
 
 class TransactionRecordService
 {
+    public function recordAccountAdjustment(Account $account, string $usdAmount, string $description): Transaction
+    {
+        $transaction = new Transaction;
+        $transaction->user()->associate($account->user);
+        $transaction->account()->associate($account);
+        $transaction->type = TransactionType::Adjustment;
+        $transaction->status = TransactionStatus::Completed;
+        $transaction->usd_amount = $usdAmount;
+        $transaction->reference = 'ADJ-'.$account->getKey().'-'.str()->uuid();
+        $transaction->description = $description;
+        $transaction->occurred_at = Carbon::now();
+        $transaction->save();
+
+        return $transaction;
+    }
+
     public function recordConfirmedDeposit(Deposit $deposit): Transaction
     {
         if ($deposit->status !== DepositStatus::Confirmed) {
