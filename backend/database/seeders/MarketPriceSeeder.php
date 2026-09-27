@@ -3,7 +3,7 @@
 namespace Database\Seeders;
 
 use App\Models\Asset;
-use App\Services\MarketPriceService;
+use App\Models\MarketPrice;
 use Illuminate\Database\Seeder;
 
 class MarketPriceSeeder extends Seeder
@@ -17,11 +17,13 @@ class MarketPriceSeeder extends Seeder
             'USDT' => ['1.00000000', '0.0200'],
         ];
 
-        $marketPriceService = app(MarketPriceService::class);
-
         foreach ($prices as $symbol => [$currentPrice, $change24hPercentage]) {
             $asset = Asset::where('symbol', $symbol)->firstOrFail();
-            $marketPriceService->update($asset, $currentPrice, $change24hPercentage);
+            $marketPrice = $asset->marketPrice()->first() ?? new MarketPrice;
+            $marketPrice->asset()->associate($asset);
+            $marketPrice->current_price = $currentPrice;
+            $marketPrice->change_24h_percentage = $change24hPercentage;
+            $marketPrice->save();
         }
     }
 }

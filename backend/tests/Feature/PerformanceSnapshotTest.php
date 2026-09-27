@@ -167,6 +167,7 @@ class PerformanceSnapshotTest extends TestCase
         Carbon $snapshotAt,
     ): PerformanceSnapshot {
         return app(PerformanceSnapshotService::class)->create(
+            User::factory()->create(['role' => 'admin']),
             $account,
             $managedBalance,
             $profitLoss,
