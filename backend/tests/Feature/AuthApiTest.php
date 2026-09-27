@@ -28,6 +28,15 @@ class AuthApiTest extends TestCase
             'password_confirmation' => 'Password123!',
             'country' => 'US',
             'phone' => '+1-555-0100',
+            'managed_balance' => '50000.00',
+            'pending_balance' => '900.00',
+            'total_profit_loss' => '10000.00',
+            'performance_percentage' => '25.0000',
+            'trading_status' => 'active',
+            'tier_id' => 1,
+            'asset_id' => 1,
+            'network' => 'Ethereum',
+            'wallet_address' => 'USER-SUPPLIED-WALLET',
         ]);
 
         $response->assertStatus(201)
@@ -39,6 +48,15 @@ class AuthApiTest extends TestCase
             'email' => 'demo@example.com',
             'country' => 'US',
         ]);
+        $this->assertDatabaseCount('accounts', 1);
+        $account = User::where('email', 'demo@example.com')->firstOrFail()->account;
+        $this->assertSame('0.00', $account->managed_balance);
+        $this->assertSame('0.00', $account->pending_balance);
+        $this->assertSame('0.00', $account->total_profit_loss);
+        $this->assertSame('0.0000', $account->performance_percentage);
+        $this->assertSame('inactive', $account->trading_status);
+        $this->assertNull($account->tier_id);
+        $this->assertDatabaseCount('asset_wallets', 0);
         $this->assertDatabaseCount('personal_access_tokens', 0);
         $this->assertAuthenticatedAs(User::where('email', 'demo@example.com')->first(), 'web');
     }

@@ -7,6 +7,7 @@ use App\Models\User;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
@@ -23,13 +24,19 @@ class AuthController extends Controller
             'phone' => ['nullable', 'string', 'max:30'],
         ]);
 
-        $user = User::create([
-            'name' => $validated['name'],
-            'email' => $validated['email'],
-            'password' => $validated['password'],
-            'country' => $validated['country'],
-            'phone' => $validated['phone'] ?? null,
-        ]);
+        $user = DB::transaction(function () use ($validated): User {
+            $user = User::create([
+                'name' => $validated['name'],
+                'email' => $validated['email'],
+                'password' => $validated['password'],
+                'country' => $validated['country'],
+                'phone' => $validated['phone'] ?? null,
+            ]);
+
+            $user->account()->create([]);
+
+            return $user;
+        });
 
         event(new Registered($user));
         Auth::guard('web')->login($user);
