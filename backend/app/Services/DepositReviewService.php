@@ -7,9 +7,9 @@ use App\Models\Account;
 use App\Models\Deposit;
 use App\Models\User;
 use App\Support\FixedDecimalMath;
-use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\ValidationException;
 use InvalidArgumentException;
 use LogicException;
@@ -19,11 +19,12 @@ class DepositReviewService
     public function __construct(
         private readonly AccountBalanceService $accountBalanceService,
         private readonly TransactionRecordService $transactionRecordService,
+        private readonly AuditLogService $auditLogService,
     ) {}
 
     public function confirm(Deposit $deposit, User $reviewer): Deposit
     {
-        $this->assertReviewer($reviewer);
+        Gate::forUser($reviewer)->authorize('admin');
 
         return DB::transaction(function () use ($deposit, $reviewer): Deposit {
             $deposit = Deposit::query()->lockForUpdate()->findOrFail($deposit->getKey());
@@ -33,6 +34,13 @@ class DepositReviewService
             if (! $account) {
                 throw new ModelNotFoundException('The deposit account no longer exists.');
             }
+
+            $oldValues = [
+                'status' => $deposit->status->value,
+                'managed_balance' => $account->managed_balance,
+                'pending_balance' => $account->pending_balance,
+                'tier_id' => $account->tier_id,
+            ];
 
             $pendingBalance = FixedDecimalMath::normalize($account->pending_balance, 18, 2, 'pending_balance');
             $usdValue = FixedDecimalMath::normalize($deposit->usd_value, 18, 2, 'usd_value');
@@ -57,6 +65,19 @@ class DepositReviewService
             $deposit->rejection_reason = null;
             $deposit->save();
             $this->transactionRecordService->recordConfirmedDeposit($deposit);
+            $this->auditLogService->record(
+                $reviewer,
+                'deposit.confirmed',
+                $deposit->user,
+                $deposit,
+                $oldValues,
+                [
+                    'status' => $deposit->status->value,
+                    'managed_balance' => $account->managed_balance,
+                    'pending_balance' => $account->pending_balance,
+                    'tier_id' => $account->tier_id,
+                ],
+            );
 
             return $deposit->refresh();
         }, 3);
@@ -64,7 +85,7 @@ class DepositReviewService
 
     public function reject(Deposit $deposit, User $reviewer, string $reason): Deposit
     {
-        $this->assertReviewer($reviewer);
+        Gate::forUser($reviewer)->authorize('admin');
         $reason = trim($reason);
 
         if ($reason === '' || mb_strlen($reason) > 1000) {
@@ -81,6 +102,13 @@ class DepositReviewService
             if (! $account) {
                 throw new ModelNotFoundException('The deposit account no longer exists.');
             }
+
+            $oldValues = [
+                'status' => $deposit->status->value,
+                'managed_balance' => $account->managed_balance,
+                'pending_balance' => $account->pending_balance,
+                'tier_id' => $account->tier_id,
+            ];
 
             try {
                 $account->pending_balance = FixedDecimalMath::subtractNonNegative(
@@ -99,16 +127,23 @@ class DepositReviewService
             $deposit->reviewed_by = $reviewer->getKey();
             $deposit->reviewed_at = now();
             $deposit->save();
+            $this->auditLogService->record(
+                $reviewer,
+                'deposit.rejected',
+                $deposit->user,
+                $deposit,
+                $oldValues,
+                [
+                    'status' => $deposit->status->value,
+                    'rejection_reason' => $deposit->rejection_reason,
+                    'managed_balance' => $account->managed_balance,
+                    'pending_balance' => $account->pending_balance,
+                    'tier_id' => $account->tier_id,
+                ],
+            );
 
             return $deposit->refresh();
         }, 3);
-    }
-
-    private function assertReviewer(User $reviewer): void
-    {
-        if (! in_array($reviewer->role, ['admin', 'super_admin'], true) || $reviewer->status !== 'active') {
-            throw new AuthorizationException('Only an active administrator may review deposits.');
-        }
     }
 
     private function assertPending(Deposit $deposit): void

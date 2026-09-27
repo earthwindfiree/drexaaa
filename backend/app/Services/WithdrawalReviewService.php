@@ -7,9 +7,9 @@ use App\Models\Account;
 use App\Models\User;
 use App\Models\Withdrawal;
 use App\Support\FixedDecimalMath;
-use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\ValidationException;
 use InvalidArgumentException;
 
@@ -18,11 +18,12 @@ class WithdrawalReviewService
     public function __construct(
         private readonly AccountBalanceService $accountBalanceService,
         private readonly TransactionRecordService $transactionRecordService,
+        private readonly AuditLogService $auditLogService,
     ) {}
 
     public function approve(Withdrawal $withdrawal, User $reviewer): Withdrawal
     {
-        $this->assertReviewer($reviewer);
+        Gate::forUser($reviewer)->authorize('admin');
 
         return DB::transaction(function () use ($withdrawal, $reviewer): Withdrawal {
             $snapshot = Withdrawal::query()->findOrFail($withdrawal->getKey());
@@ -37,6 +38,12 @@ class WithdrawalReviewService
                 ->lockForUpdate()
                 ->findOrFail($snapshot->getKey());
             $this->assertPending($withdrawal);
+            $oldValues = [
+                'status' => $withdrawal->status->value,
+                'amount' => $withdrawal->amount,
+                'managed_balance' => $account->managed_balance,
+                'tier_id' => $account->tier_id,
+            ];
 
             try {
                 $managedBalance = FixedDecimalMath::subtractNonNegative(
@@ -58,6 +65,19 @@ class WithdrawalReviewService
             $withdrawal->rejection_reason = null;
             $withdrawal->save();
             $this->transactionRecordService->recordApprovedWithdrawal($withdrawal);
+            $this->auditLogService->record(
+                $reviewer,
+                'withdrawal.approved',
+                $withdrawal->user,
+                $withdrawal,
+                $oldValues,
+                [
+                    'status' => $withdrawal->status->value,
+                    'amount' => $withdrawal->amount,
+                    'managed_balance' => $account->managed_balance,
+                    'tier_id' => $account->tier_id,
+                ],
+            );
 
             return $withdrawal->refresh();
         }, 3);
@@ -65,7 +85,7 @@ class WithdrawalReviewService
 
     public function reject(Withdrawal $withdrawal, User $reviewer, string $reason): Withdrawal
     {
-        $this->assertReviewer($reviewer);
+        Gate::forUser($reviewer)->authorize('admin');
         $reason = trim($reason);
 
         if ($reason === '' || mb_strlen($reason) > 1000) {
@@ -87,22 +107,35 @@ class WithdrawalReviewService
                 ->lockForUpdate()
                 ->findOrFail($snapshot->getKey());
             $this->assertPending($withdrawal);
+            $oldValues = [
+                'status' => $withdrawal->status->value,
+                'amount' => $withdrawal->amount,
+                'managed_balance' => $account->managed_balance,
+                'tier_id' => $account->tier_id,
+            ];
 
             $withdrawal->status = WithdrawalStatus::Rejected;
             $withdrawal->rejection_reason = $reason;
             $withdrawal->reviewed_by = $reviewer->getKey();
             $withdrawal->reviewed_at = now();
             $withdrawal->save();
+            $this->auditLogService->record(
+                $reviewer,
+                'withdrawal.rejected',
+                $withdrawal->user,
+                $withdrawal,
+                $oldValues,
+                [
+                    'status' => $withdrawal->status->value,
+                    'amount' => $withdrawal->amount,
+                    'rejection_reason' => $withdrawal->rejection_reason,
+                    'managed_balance' => $account->managed_balance,
+                    'tier_id' => $account->tier_id,
+                ],
+            );
 
             return $withdrawal->refresh();
         }, 3);
-    }
-
-    private function assertReviewer(User $reviewer): void
-    {
-        if (! in_array($reviewer->role, ['admin', 'super_admin'], true) || $reviewer->status !== 'active') {
-            throw new AuthorizationException('Only an active administrator may review withdrawals.');
-        }
     }
 
     private function assertPending(Withdrawal $withdrawal): void
