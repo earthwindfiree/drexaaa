@@ -15,11 +15,15 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // User::factory(10)->create();
+        $this->call(StrategyTierSeeder::class);
+        $this->call(AssetSeeder::class);
+        $this->call(MarketPriceSeeder::class);
 
-        User::factory()->create([
+        $user = User::factory()->create([
             'name' => 'Test User',
             'email' => 'test@example.com',
         ]);
+
+        $user->account()->create([]);
     }
 }
