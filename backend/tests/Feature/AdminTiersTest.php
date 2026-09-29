@@ -8,6 +8,7 @@ use App\Models\Tier;
 use App\Models\Transaction;
 use App\Models\User;
 use App\Services\AccountBalanceService;
+use App\Services\AdminStrategyService;
 use App\Services\AdminTierService;
 use App\Services\AuditLogService;
 use Database\Seeders\StrategyTierSeeder;
@@ -57,9 +58,26 @@ class AdminTiersTest extends TestCase
         }
     }
 
-    public function test_tier_update_changes_configuration_recalculates_accounts_and_audits_without_financial_mutation(): void
+    public function test_tier_and_strategy_configuration_mutations_require_super_admin(): void
     {
         $admin = User::factory()->create(['role' => 'admin']);
+        $tier = Tier::where('name', 'Foundation')->firstOrFail();
+        $strategy = $tier->strategy;
+
+        $this->actingAs($admin)
+            ->patchJson('/api/admin/tiers/'.$tier->id, ['name' => 'Changed'])
+            ->assertForbidden();
+        $this->actingAs($admin)
+            ->patchJson('/api/admin/strategies/'.$strategy->id, ['description' => 'Changed'])
+            ->assertForbidden();
+
+        $this->assertSame('Foundation', $tier->fresh()->name);
+        $this->assertSame(0, AuditLog::count());
+    }
+
+    public function test_tier_update_changes_configuration_recalculates_accounts_and_audits_without_financial_mutation(): void
+    {
+        $admin = User::factory()->create(['role' => 'super_admin']);
         $momentum = Tier::where('name', 'Momentum')->firstOrFail();
         $foundation = Tier::where('name', 'Foundation')->firstOrFail();
         $elevationStrategy = Strategy::where('name', 'Elevation')->firstOrFail();
@@ -94,11 +112,94 @@ class AdminTiersTest extends TestCase
         $this->assertSame('1500.00', $audit->new_values['minimum_balance']);
         $this->assertSame($elevationStrategy->id, $audit->new_values['strategy_id']);
         $this->assertSame(1, $audit->metadata['recalculated_accounts']);
+        $this->assertDatabaseHas('user_notifications', [
+            'user_id' => $owner->id,
+            'category' => 'account',
+            'title' => 'Tier changed',
+        ]);
+    }
+
+    public function test_strategy_profile_update_is_validated_and_audited(): void
+    {
+        $admin = User::factory()->create(['role' => 'super_admin']);
+        $strategy = Strategy::where('name', 'Foundation')->firstOrFail();
+
+        $this->actingAs($admin)
+            ->patchJson('/api/admin/strategies/'.$strategy->id, [
+                'name' => 'Foundation Plus',
+                'description' => 'A revised descriptive demo profile.',
+                'risk_profile' => 'conservative',
+                'active' => false,
+            ])
+            ->assertOk()
+            ->assertJsonPath('data.name', 'Foundation Plus')
+            ->assertJsonPath('data.description', 'A revised descriptive demo profile.')
+            ->assertJsonPath('data.risk_profile', 'conservative')
+            ->assertJsonPath('data.active', false);
+
+        $audit = AuditLog::where('action', 'strategy.configuration.updated')->firstOrFail();
+        $this->assertSame($admin->id, $audit->actor_id);
+        $this->assertSame($strategy->id, $audit->entity_id);
+        $this->assertSame('Foundation', $audit->old_values['name']);
+        $this->assertSame('Foundation Plus', $audit->new_values['name']);
+        $this->assertSame('conservative', $audit->new_values['risk_profile']);
+        $this->assertSame(['name', 'description', 'risk_profile', 'active'], $audit->metadata['changed_fields']);
+    }
+
+    public function test_strategy_profile_updates_reject_unauthorized_and_invalid_changes(): void
+    {
+        $strategy = Strategy::where('name', 'Foundation')->firstOrFail();
+        $endpoint = '/api/admin/strategies/'.$strategy->id;
+        $this->patchJson($endpoint, ['description' => 'No access'])->assertUnauthorized();
+        $this->actingAs(User::factory()->create())
+            ->patchJson($endpoint, ['description' => 'No access'])
+            ->assertForbidden();
+
+        $admin = User::factory()->create(['role' => 'super_admin']);
+        $this->actingAs($admin)->patchJson($endpoint, ['risk_profile' => ''])->assertUnprocessable();
+        $this->actingAs($admin)->patchJson($endpoint, ['active' => 'not-a-boolean'])->assertUnprocessable();
+        $this->actingAs($admin)->patchJson($endpoint, ['tier_id' => 1])->assertUnprocessable();
+        $this->actingAs($admin)->patchJson($endpoint, ['name' => 'Momentum'])->assertUnprocessable();
+
+        $this->assertSame('Foundation', $strategy->fresh()->name);
+        $this->assertSame(0, AuditLog::count());
+    }
+
+    public function test_strategy_update_rolls_back_when_audit_logging_fails(): void
+    {
+        $admin = User::factory()->create(['role' => 'super_admin']);
+        $strategy = Strategy::where('name', 'Foundation')->firstOrFail();
+        $this->app->instance(AuditLogService::class, new class extends AuditLogService
+        {
+            public function record(
+                User $actor,
+                string $action,
+                ?User $user = null,
+                ?Model $entity = null,
+                ?array $oldValues = null,
+                ?array $newValues = null,
+                ?array $metadata = null,
+            ): AuditLog {
+                parent::record($actor, $action, $user, $entity, $oldValues, $newValues, $metadata);
+
+                throw new RuntimeException('Forced audit failure.');
+            }
+        });
+
+        try {
+            app(AdminStrategyService::class)->update($strategy, $admin, ['risk_profile' => 'updated']);
+            $this->fail('Audit failure must roll back strategy configuration.');
+        } catch (RuntimeException $exception) {
+            $this->assertSame('Forced audit failure.', $exception->getMessage());
+        }
+
+        $this->assertSame('conservative', $strategy->fresh()->risk_profile);
+        $this->assertDatabaseCount('audit_logs', 0);
     }
 
     public function test_duplicate_thresholds_names_invalid_precision_and_protected_fields_are_rejected(): void
     {
-        $admin = User::factory()->create(['role' => 'admin']);
+        $admin = User::factory()->create(['role' => 'super_admin']);
         $foundation = Tier::where('name', 'Foundation')->firstOrFail();
         $momentum = Tier::where('name', 'Momentum')->firstOrFail();
         $endpoint = '/api/admin/tiers/'.$foundation->id;
@@ -114,7 +215,7 @@ class AdminTiersTest extends TestCase
 
     public function test_audit_failure_rolls_back_tier_configuration_and_account_recalculation(): void
     {
-        $admin = User::factory()->create(['role' => 'admin']);
+        $admin = User::factory()->create(['role' => 'super_admin']);
         $momentum = Tier::where('name', 'Momentum')->firstOrFail();
         $owner = User::factory()->create();
         $account = $owner->account()->create([]);

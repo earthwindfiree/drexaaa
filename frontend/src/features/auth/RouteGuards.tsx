@@ -28,6 +28,36 @@ function ProtectedRoute() {
   return <Outlet />
 }
 
+function AdminRoute() {
+  const { user } = useAuth()
+
+  if (!user || user.status !== 'active' || !['admin', 'super_admin'].includes(user.role)) {
+    return <Navigate to="/dashboard" replace />
+  }
+
+  return <Outlet />
+}
+
+function VerifiedUserRoute() {
+  const { user } = useAuth()
+
+  if (user && !user.email_verified_at) {
+    return <Navigate to="/verify-email" replace />
+  }
+
+  return <Outlet />
+}
+
+function EmailVerificationRoute() {
+  const { user } = useAuth()
+
+  if (user?.email_verified_at) {
+    return <Navigate to="/dashboard" replace />
+  }
+
+  return <Outlet />
+}
+
 function GuestRoute() {
   const { user, loading } = useAuth()
   const location = useLocation()
@@ -41,4 +71,4 @@ function GuestRoute() {
   return <Outlet />
 }
 
-export { GuestRoute, ProtectedRoute }
+export { AdminRoute, EmailVerificationRoute, GuestRoute, ProtectedRoute, VerifiedUserRoute }

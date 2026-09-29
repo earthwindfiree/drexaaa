@@ -3,9 +3,12 @@
 namespace App\Http\Controllers\Api\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\User;
 use App\Services\AdminUserListService;
+use App\Services\AdminUserManagementService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
 
 class AdminUsersController extends Controller
 {
@@ -51,5 +54,31 @@ class AdminUsersController extends Controller
                 'total' => $users->total(),
             ],
         ]);
+    }
+
+    public function updateAccess(Request $request, User $user, AdminUserManagementService $userManagementService): JsonResponse
+    {
+        $allowedFields = ['role', 'status'];
+
+        if (array_diff(array_keys($request->all()), $allowedFields) !== []) {
+            throw ValidationException::withMessages(['user' => ['Only role and admin account status may be changed.']]);
+        }
+
+        $changes = $request->validate([
+            'role' => ['sometimes', 'required', 'string', 'in:user,admin,super_admin'],
+            'status' => ['sometimes', 'required', 'string', 'in:active,suspended'],
+        ]);
+
+        if ($changes === []) {
+            throw ValidationException::withMessages(['user' => ['At least one access field is required.']]);
+        }
+
+        $updated = $userManagementService->updateAccess($user, $request->user(), $changes);
+
+        return response()->json(['data' => [
+            'id' => $updated->id,
+            'role' => $updated->role,
+            'status' => $updated->status,
+        ]]);
     }
 }

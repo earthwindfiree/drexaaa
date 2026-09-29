@@ -8,6 +8,7 @@ use App\Models\User;
 use App\Support\FixedDecimalMath;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\ValidationException;
 use InvalidArgumentException;
 
@@ -22,6 +23,8 @@ class MarketPriceService
 
     public function update(User $actor, Asset $asset, string $currentPrice, string $change24hPercentage): MarketPrice
     {
+        Gate::forUser($actor)->authorize('super-admin');
+
         try {
             $currentPrice = FixedDecimalMath::normalize($currentPrice, 12, 8, 'current_price');
             $change24hPercentage = $this->normalizeSignedDecimal($change24hPercentage, 5, 4, 'change_24h_percentage');

@@ -24,7 +24,7 @@ class AdminTierService
 
     public function update(Tier $tier, User $actor, array $changes): Tier
     {
-        Gate::forUser($actor)->authorize('admin');
+        Gate::forUser($actor)->authorize('super-admin');
 
         try {
             $changes = $this->normalizeChanges($changes);
@@ -113,14 +113,24 @@ class AdminTierService
     private function recalculateAccounts(): int
     {
         $calculator = app(TierCalculator::class);
+        $notifications = app(UserNotificationService::class);
         $updated = 0;
 
-        Account::query()->lockForUpdate()->get(['id', 'managed_balance', 'tier_id'])->each(function (Account $account) use ($calculator, &$updated): void {
-            $tierId = $calculator->qualifyingTier($account->managed_balance)?->id;
+        Account::query()->lockForUpdate()->get(['id', 'user_id', 'managed_balance', 'tier_id'])->each(function (Account $account) use ($calculator, $notifications, &$updated): void {
+            $tier = $calculator->qualifyingTier($account->managed_balance);
+            $tierId = $tier?->id;
 
             if ($tierId !== $account->tier_id) {
                 $account->tier_id = $tierId;
                 $account->save();
+                $notifications->create(
+                    $account->user,
+                    'account',
+                    'Tier changed',
+                    $tier
+                        ? 'Your account tier changed to '.$tier->name.' after tier configuration was updated.'
+                        : 'Your account no longer qualifies for a configured tier after tier configuration was updated.',
+                );
                 $updated++;
             }
         });
