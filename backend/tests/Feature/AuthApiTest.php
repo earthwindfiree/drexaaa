@@ -28,7 +28,7 @@ class AuthApiTest extends TestCase
 
     public function test_user_can_register_and_is_authenticated_without_a_personal_access_token(): void
     {
-        $response = $this->postJson('/api/auth/register', [
+        $response = $this->withoutHeader('Origin')->postJson('/api/auth/register', [
             'name' => 'Demo User',
             'email' => 'demo@example.com',
             'password' => 'Password123!',
@@ -111,6 +111,20 @@ class AuthApiTest extends TestCase
         $this->assertDatabaseCount('personal_access_tokens', 0);
     }
 
+    public function test_login_creates_a_session_when_request_has_no_frontend_origin_header(): void
+    {
+        $user = User::factory()->create(['password' => 'Password123!']);
+
+        $response = $this->withoutHeader('Origin')->postJson('/api/auth/login', [
+            'email' => $user->email,
+            'password' => 'Password123!',
+        ]);
+
+        $response->assertOk()->assertJsonPath('user.email', $user->email);
+        $this->assertNotNull($response->getCookie(config('session.cookie')));
+        $this->assertAuthenticatedAs($user, 'web');
+    }
+
     public function test_role_and_status_are_not_mass_assignable(): void
     {
         User::create([
@@ -179,15 +193,18 @@ class AuthApiTest extends TestCase
         Auth::forgetGuards();
 
         $logoutResponse = $this->withCredentials()
+            ->withoutHeader('Origin')
             ->withCookie(config('session.cookie'), $sessionCookie)
             ->postJson('/api/auth/logout');
         $logoutResponse->assertOk();
 
         $this->assertGuest('web');
         Auth::forgetGuards();
-        $this->withCookie(config('session.cookie'), $this->sessionCookieValue($logoutResponse))
-            ->getJson('/api/auth/me')
-            ->assertUnauthorized();
+        $unauthenticatedResponse = $this->withoutHeader('Origin')
+            ->withCookie(config('session.cookie'), $this->sessionCookieValue($logoutResponse))
+            ->get('/api/auth/me');
+        $unauthenticatedResponse->assertUnauthorized();
+        $this->assertStringContainsString('application/json', $unauthenticatedResponse->headers->get('content-type'));
         $this->assertDatabaseCount('personal_access_tokens', 0);
     }
 

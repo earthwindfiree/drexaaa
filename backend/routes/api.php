@@ -30,8 +30,11 @@ Route::middleware('api')->get('/health', function () {
 
 Route::prefix('auth')->group(function () {
     Route::get('/countries', [AuthController::class, 'countries']);
-    Route::post('/register', [AuthController::class, 'register'])->middleware('throttle:6,1');
-    Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:6,1');
+    Route::middleware('web')->group(function () {
+        Route::post('/register', [AuthController::class, 'register'])->middleware('throttle:6,1');
+        Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:6,1');
+        Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth:sanctum');
+    });
     Route::post('/forgot-password', [AuthController::class, 'forgotPassword'])->middleware('throttle:6,1');
     Route::post('/reset-password', [AuthController::class, 'resetPassword'])->middleware('throttle:6,1');
     Route::get('/verify-email/{id}/{hash}', [AuthController::class, 'verifyEmail'])
@@ -39,7 +42,6 @@ Route::prefix('auth')->group(function () {
         ->name('verification.verify');
     Route::post('/verification-notification', [AuthController::class, 'sendVerification'])
         ->middleware(['auth:sanctum', 'throttle:6,1']);
-    Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth:sanctum');
     Route::get('/me', [AuthController::class, 'me'])->middleware('auth:sanctum');
 });
 
