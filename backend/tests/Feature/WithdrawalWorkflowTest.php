@@ -52,6 +52,11 @@ class WithdrawalWorkflowTest extends TestCase
         $this->assertSame('17.25', $account->pending_balance);
         $this->assertSame('Momentum', $account->tier->name);
         $this->assertSame('900.00', app(WithdrawalAvailabilityService::class)->withdrawableAmount($account));
+        $this->assertDatabaseHas('user_notifications', [
+            'user_id' => $user->id,
+            'category' => 'financial',
+            'title' => 'Withdrawal submitted',
+        ]);
     }
 
     public function test_amount_must_be_positive(): void
@@ -148,6 +153,8 @@ class WithdrawalWorkflowTest extends TestCase
         $this->assertSame($reviewer->id, $approved->reviewed_by);
         $this->assertNotNull($approved->reviewed_at);
         $this->assertSame('900.00', app(WithdrawalAvailabilityService::class)->withdrawableAmount($account));
+        $this->assertDatabaseHas('user_notifications', ['user_id' => $user->id, 'title' => 'Withdrawal approved']);
+        $this->assertDatabaseHas('user_notifications', ['user_id' => $user->id, 'title' => 'Tier changed']);
     }
 
     public function test_approved_withdrawal_cannot_be_processed_twice(): void
@@ -165,6 +172,7 @@ class WithdrawalWorkflowTest extends TestCase
         }
 
         $this->assertSame('900.00', $account->fresh()->managed_balance);
+        $this->assertSame(1, $user->notifications()->where('title', 'Withdrawal approved')->count());
     }
 
     public function test_insufficient_managed_balance_at_approval_keeps_withdrawal_pending(): void
@@ -204,6 +212,7 @@ class WithdrawalWorkflowTest extends TestCase
         $this->assertSame('13.45', $account->pending_balance);
         $this->assertSame('Momentum', $account->tier->name);
         $this->assertSame('1000.00', app(WithdrawalAvailabilityService::class)->withdrawableAmount($account));
+        $this->assertDatabaseHas('user_notifications', ['user_id' => $user->id, 'title' => 'Withdrawal rejected']);
     }
 
     public function test_rejected_withdrawal_cannot_be_rejected_or_approved_again(): void
@@ -226,6 +235,7 @@ class WithdrawalWorkflowTest extends TestCase
         }
 
         $this->assertSame(WithdrawalStatus::Rejected, $withdrawal->fresh()->status);
+        $this->assertSame(1, $withdrawal->user->notifications()->where('title', 'Withdrawal rejected')->count());
     }
 
     public function test_normal_user_cannot_review_a_withdrawal(): void

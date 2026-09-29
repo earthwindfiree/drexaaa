@@ -36,7 +36,7 @@ class MarketPriceTest extends TestCase
         $this->seed(StrategyTierSeeder::class);
         $this->seed(AssetSeeder::class);
         $this->seed(MarketPriceSeeder::class);
-        $this->admin = User::factory()->create(['role' => 'admin']);
+        $this->admin = User::factory()->create(['role' => 'super_admin']);
     }
 
     public function test_seeded_current_price_is_retrievable(): void

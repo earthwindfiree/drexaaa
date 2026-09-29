@@ -1,7 +1,7 @@
 import { BrowserRouter, Route, Routes } from 'react-router-dom'
 import { AuthProvider } from './features/auth/AuthProvider'
 import AuthPage from './features/auth/AuthPage'
-import { GuestRoute, ProtectedRoute } from './features/auth/RouteGuards'
+import { AdminRoute, EmailVerificationRoute, GuestRoute, ProtectedRoute, VerifiedUserRoute } from './features/auth/RouteGuards'
 import AdminLayout from './layouts/AdminLayout'
 import AppLayout from './layouts/AppLayout'
 import AdminDashboardPage from './pages/AdminDashboardPage'
@@ -16,6 +16,9 @@ import AdminWithdrawalsPage from './pages/AdminWithdrawalsPage'
 import AdminTransactionsPage from './pages/AdminTransactionsPage'
 import AdminAuditLogsPage from './pages/AdminAuditLogsPage'
 import AdminTiersPage from './pages/AdminTiersPage'
+import AdminSettingsPage from './pages/AdminSettingsPage'
+import PasswordResetPage from './pages/PasswordResetPage'
+import EmailVerificationPage from './pages/EmailVerificationPage'
 import HomePage from './pages/HomePage'
 import NotFoundPage from './pages/NotFoundPage'
 import RoutePlaceholder from './components/RoutePlaceholder'
@@ -54,15 +57,25 @@ function AppRouter() {
             <Route element={<AppLayout />}>
               <Route path="/login" element={<AuthPage mode="login" />} />
               <Route path="/register" element={<AuthPage mode="register" />} />
+              <Route path="/forgot-password" element={<PasswordResetPage mode="request" />} />
+              <Route path="/reset-password" element={<PasswordResetPage mode="reset" />} />
             </Route>
           </Route>
           <Route element={<ProtectedRoute />}>
-            <Route element={<AppLayout />}>
-              {userRoutes.map((route) => (
-                <Route key={route.path} path={route.path} element={<RoutePlaceholder title={route.title} />} />
-              ))}
+            <Route element={<EmailVerificationRoute />}>
+              <Route element={<AppLayout />}>
+                <Route path="/verify-email" element={<EmailVerificationPage />} />
+              </Route>
             </Route>
-            <Route element={<AdminLayout />}>
+            <Route element={<VerifiedUserRoute />}>
+              <Route element={<AppLayout />}>
+                {userRoutes.map((route) => (
+                  <Route key={route.path} path={route.path} element={<RoutePlaceholder title={route.title} />} />
+                ))}
+              </Route>
+            </Route>
+            <Route element={<AdminRoute />}>
+              <Route element={<AdminLayout />}>
               <Route path="/admin" element={<AdminDashboardPage />} />
               <Route path="/admin/users" element={<AdminUsersPage />} />
               <Route path="/admin/accounts" element={<AdminAccountsPage />} />
@@ -75,9 +88,11 @@ function AppRouter() {
               <Route path="/admin/transactions" element={<AdminTransactionsPage />} />
               <Route path="/admin/audit-logs" element={<AdminAuditLogsPage />} />
               <Route path="/admin/tiers" element={<AdminTiersPage />} />
-              {adminRoutes.filter((route) => route.path !== '/admin' && route.path !== '/admin/users' && route.path !== '/admin/accounts' && route.path !== '/admin/markets' && route.path !== '/admin/deposits' && route.path !== '/admin/withdrawals' && route.path !== '/admin/transactions' && route.path !== '/admin/audit-logs' && route.path !== '/admin/tiers').map((route) => (
+              <Route path="/admin/settings" element={<AdminSettingsPage />} />
+              {adminRoutes.filter((route) => route.path !== '/admin' && route.path !== '/admin/users' && route.path !== '/admin/accounts' && route.path !== '/admin/markets' && route.path !== '/admin/deposits' && route.path !== '/admin/withdrawals' && route.path !== '/admin/transactions' && route.path !== '/admin/audit-logs' && route.path !== '/admin/tiers' && route.path !== '/admin/settings').map((route) => (
                 <Route key={route.path} path={route.path} element={<RoutePlaceholder title={route.title} />} />
               ))}
+              </Route>
             </Route>
           </Route>
           <Route path="*" element={<NotFoundPage />} />

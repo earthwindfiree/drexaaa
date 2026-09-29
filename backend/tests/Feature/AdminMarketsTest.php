@@ -66,9 +66,32 @@ class AdminMarketsTest extends TestCase
         }
     }
 
-    public function test_asset_status_is_audited_and_inactive_assets_are_not_depositable(): void
+    public function test_market_and_wallet_configuration_mutations_reject_ordinary_admins(): void
     {
         $admin = User::factory()->create(['role' => 'admin']);
+        $btc = Asset::where('symbol', 'BTC')->firstOrFail();
+        $wallet = $btc->wallets()->firstOrFail();
+
+        $this->actingAs($admin)->patchJson('/api/admin/markets/'.$btc->id.'/price', [
+            'current_price' => '70000',
+            'change_24h_percentage' => '1.0000',
+        ])->assertForbidden();
+        $this->actingAs($admin)->patchJson('/api/admin/markets/'.$btc->id.'/status', ['active' => false])->assertForbidden();
+        $this->actingAs($admin)->postJson('/api/admin/markets/'.$btc->id.'/wallets', [
+            'wallet_address' => 'forbidden-wallet',
+            'active' => true,
+        ])->assertForbidden();
+        $this->actingAs($admin)->patchJson('/api/admin/wallets/'.$wallet->id.'/status', ['active' => false])->assertForbidden();
+
+        $this->assertSame('67540.00000000', $btc->marketPrice->current_price);
+        $this->assertTrue($btc->fresh()->active);
+        $this->assertDatabaseMissing('asset_wallets', ['wallet_address' => 'forbidden-wallet']);
+        $this->assertDatabaseCount('audit_logs', 0);
+    }
+
+    public function test_asset_status_is_audited_and_inactive_assets_are_not_depositable(): void
+    {
+        $admin = User::factory()->create(['role' => 'super_admin']);
         $btc = Asset::where('symbol', 'BTC')->firstOrFail();
 
         $this->actingAs($admin)
@@ -93,7 +116,7 @@ class AdminMarketsTest extends TestCase
 
     public function test_market_price_update_uses_existing_service_and_does_not_change_financial_state(): void
     {
-        $admin = User::factory()->create(['role' => 'admin']);
+        $admin = User::factory()->create(['role' => 'super_admin']);
         $btc = Asset::where('symbol', 'BTC')->firstOrFail();
         $user = User::factory()->create();
         $account = $user->account()->create([]);
@@ -121,7 +144,7 @@ class AdminMarketsTest extends TestCase
 
     public function test_invalid_price_precision_and_unknown_fields_are_rejected(): void
     {
-        $admin = User::factory()->create(['role' => 'admin']);
+        $admin = User::factory()->create(['role' => 'super_admin']);
         $btc = Asset::where('symbol', 'BTC')->firstOrFail();
         $endpoint = '/api/admin/markets/'.$btc->id.'/price';
 
@@ -137,7 +160,7 @@ class AdminMarketsTest extends TestCase
 
     public function test_wallets_can_be_added_and_switched_without_duplicate_active_wallets(): void
     {
-        $admin = User::factory()->create(['role' => 'admin']);
+        $admin = User::factory()->create(['role' => 'super_admin']);
         $btc = Asset::where('symbol', 'BTC')->firstOrFail();
         $oldWallet = $btc->wallets()->firstOrFail();
 
@@ -184,7 +207,7 @@ class AdminMarketsTest extends TestCase
 
     public function test_wallet_audit_failure_rolls_back_wallet_creation(): void
     {
-        $admin = User::factory()->create(['role' => 'admin']);
+        $admin = User::factory()->create(['role' => 'super_admin']);
         $btc = Asset::where('symbol', 'BTC')->firstOrFail();
         $this->app->instance(AuditLogService::class, new class extends AuditLogService
         {

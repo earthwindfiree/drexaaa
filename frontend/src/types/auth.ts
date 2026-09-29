@@ -6,6 +6,7 @@ export interface AuthUser {
   phone: string | null
   role: string
   status: string
+  email_verified_at: string | null
 }
 
 export interface LoginCredentials {

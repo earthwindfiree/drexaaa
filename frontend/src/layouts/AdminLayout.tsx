@@ -12,6 +12,7 @@ const adminNavigation = [
   { label: 'Transactions', to: '/admin/transactions' },
   { label: 'Audit Logs', to: '/admin/audit-logs' },
   { label: 'Tiers', to: '/admin/tiers' },
+  { label: 'Settings', to: '/admin/settings' },
 ]
 
 function AdminLayout() {

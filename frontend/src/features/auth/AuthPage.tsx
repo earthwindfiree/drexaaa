@@ -1,6 +1,6 @@
-import { useState, type FormEvent } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
-import { ApiError } from '../../lib/api'
+import { useEffect, useState, type FormEvent } from 'react'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
+import { ApiError, apiRequest } from '../../lib/api'
 import { useAuth } from './AuthContext'
 
 type AuthMode = 'login' | 'register'
@@ -11,6 +11,11 @@ type FormValues = {
   password_confirmation: string
   country: string
   phone: string
+}
+
+interface CountryOption {
+  code: string
+  name: string
 }
 
 const emptyForm: FormValues = {
@@ -27,11 +32,33 @@ const inputClassName = 'mt-1 block w-full rounded-lg border border-slate-700 bg-
 function AuthPage({ mode }: { mode: AuthMode }) {
   const isRegister = mode === 'register'
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
   const { login, register, error: sessionError } = useAuth()
   const [form, setForm] = useState(emptyForm)
+  const [countries, setCountries] = useState<CountryOption[]>([])
+  const [countrySearch, setCountrySearch] = useState('')
+  const [countriesLoading, setCountriesLoading] = useState(isRegister)
   const [fieldErrors, setFieldErrors] = useState<Record<string, string[]>>({})
   const [formError, setFormError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
+
+  useEffect(() => {
+    if (!isRegister) return
+    let active = true
+
+    void apiRequest<{ data: CountryOption[] }>('/api/auth/countries')
+      .then((response) => {
+        if (active) setCountries(response.data)
+      })
+      .catch((requestError: unknown) => {
+        if (active) setFormError(requestError instanceof Error ? requestError.message : 'Unable to load countries.')
+      })
+      .finally(() => {
+        if (active) setCountriesLoading(false)
+      })
+
+    return () => { active = false }
+  }, [isRegister])
 
   function updateField(field: keyof FormValues, value: string) {
     setForm((current) => ({ ...current, [field]: value }))
@@ -46,8 +73,8 @@ function AuthPage({ mode }: { mode: AuthMode }) {
     setSubmitting(true)
 
     try {
-      if (isRegister) {
-        await register({
+      const sessionUser = isRegister
+        ? await register({
           name: form.name,
           email: form.email,
           password: form.password,
@@ -55,11 +82,9 @@ function AuthPage({ mode }: { mode: AuthMode }) {
           country: form.country,
           phone: form.phone || undefined,
         })
-      } else {
-        await login({ email: form.email, password: form.password })
-      }
+        : await login({ email: form.email, password: form.password })
 
-      navigate('/dashboard', { replace: true })
+      navigate(sessionUser.role === 'admin' || sessionUser.role === 'super_admin' ? '/admin' : '/dashboard', { replace: true })
     } catch (requestError) {
       if (requestError instanceof ApiError) {
         setFieldErrors(requestError.errors)
@@ -89,6 +114,12 @@ function AuthPage({ mode }: { mode: AuthMode }) {
           <div role="alert" className="mt-5 rounded-lg border border-rose-500/30 bg-rose-500/10 px-3 py-2.5 text-sm text-rose-200">
             {visibleError}
           </div>
+        )}
+
+        {!isRegister && searchParams.get('verified') === '1' && (
+          <p role="status" className="mt-5 border border-emerald-500/30 bg-emerald-500/10 px-3 py-2.5 text-sm text-emerald-200">
+            Email address verified. You can now log in.
+          </p>
         )}
 
         <form onSubmit={(event) => void handleSubmit(event)} className="mt-6 space-y-4" noValidate>
@@ -126,18 +157,32 @@ function AuthPage({ mode }: { mode: AuthMode }) {
           {isRegister && (
             <>
               <label className="block text-sm font-medium text-slate-200">
-                Country code
+                Search countries
                 <input
+                  type="search"
+                  value={countrySearch}
+                  onChange={(event) => setCountrySearch(event.target.value)}
+                  autoComplete="off"
+                  className={inputClassName}
+                  aria-label="Search countries"
+                />
+              </label>
+              <label className="block text-sm font-medium text-slate-200">
+                Country
+                <select
                   required
-                  maxLength={2}
-                  autoComplete="country"
                   name="country"
-                  placeholder="US"
                   value={form.country}
-                  onChange={(event) => updateField('country', event.target.value.toUpperCase())}
+                  disabled={countriesLoading}
+                  onChange={(event) => updateField('country', event.target.value)}
                   className={inputClassName}
                   aria-invalid={Boolean(fieldError('country'))}
-                />
+                >
+                  <option value="">{countriesLoading ? 'Loading countries...' : 'Select a country'}</option>
+                  {countries
+                    .filter((country) => `${country.name} ${country.code}`.toLowerCase().includes(countrySearch.toLowerCase()))
+                    .map((country) => <option key={country.code} value={country.code}>{country.name} ({country.code})</option>)}
+                </select>
                 {fieldError('country') && <span className="mt-1 block text-xs text-rose-300">{fieldError('country')}</span>}
               </label>
 
@@ -197,6 +242,12 @@ function AuthPage({ mode }: { mode: AuthMode }) {
             {submitting ? 'Please wait…' : isRegister ? 'Create account' : 'Log in'}
           </button>
         </form>
+
+        {!isRegister && (
+          <p className="mt-4 text-right text-sm">
+            <Link to="/forgot-password" className="font-medium text-cyan-300 hover:text-cyan-200">Forgot password?</Link>
+          </p>
+        )}
 
         <p className="mt-6 text-center text-sm text-slate-400">
           {isRegister ? 'Already registered?' : 'New to the demo?'}{' '}
