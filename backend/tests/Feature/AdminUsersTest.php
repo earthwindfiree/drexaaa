@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\Account;
+use App\Models\AuditLog;
 use App\Models\Strategy;
 use App\Models\Tier;
 use App\Models\User;
@@ -131,5 +132,56 @@ class AdminUsersTest extends TestCase
             ->assertJsonPath('meta.per_page', 5)
             ->assertJsonPath('meta.last_page', 4)
             ->assertJsonCount(5, 'data');
+    }
+
+    public function test_role_changes_and_admin_suspension_are_super_admin_only_and_audited(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $target = User::factory()->create(['role' => 'admin']);
+        $endpoint = '/api/admin/users/'.$target->id.'/access';
+
+        $this->actingAs($admin)->patchJson($endpoint, ['status' => 'suspended'])->assertForbidden();
+        $this->actingAs($admin)->patchJson($endpoint, ['role' => 'super_admin'])->assertForbidden();
+        $this->assertSame('admin', $target->fresh()->role);
+        $this->assertSame('active', $target->fresh()->status);
+        $this->assertDatabaseCount('audit_logs', 0);
+
+        $superAdmin = User::factory()->create(['role' => 'super_admin']);
+        $this->actingAs($superAdmin)
+            ->patchJson($endpoint, ['status' => 'suspended'])
+            ->assertOk()
+            ->assertJsonPath('data.status', 'suspended');
+
+        $audit = AuditLog::where('action', 'user.access.updated')->firstOrFail();
+        $this->assertSame($superAdmin->id, $audit->actor_id);
+        $this->assertSame($target->id, $audit->user_id);
+        $this->assertSame('active', $audit->old_values['status']);
+        $this->assertSame('suspended', $audit->new_values['status']);
+        $this->assertDatabaseHas('user_notifications', [
+            'user_id' => $target->id,
+            'category' => 'security',
+            'title' => 'Account access updated',
+        ]);
+
+        $this->actingAs($superAdmin)
+            ->patchJson('/api/admin/users/'.$target->id.'/access', ['role' => 'user'])
+            ->assertOk()
+            ->assertJsonPath('data.role', 'user');
+    }
+
+    public function test_non_admin_status_changes_and_invalid_access_values_are_rejected(): void
+    {
+        $superAdmin = User::factory()->create(['role' => 'super_admin']);
+        $user = User::factory()->create();
+        $endpoint = '/api/admin/users/'.$user->id.'/access';
+
+        $this->actingAs($superAdmin)->patchJson($endpoint, ['status' => 'suspended'])->assertUnprocessable();
+        $this->actingAs($superAdmin)->patchJson($endpoint, ['role' => 'owner'])->assertUnprocessable();
+        $this->actingAs($superAdmin)->patchJson($endpoint, ['status' => 'deleted'])->assertUnprocessable();
+        $this->actingAs($superAdmin)->patchJson($endpoint, ['managed_balance' => '1000'])->assertUnprocessable();
+
+        $this->assertSame('user', $user->fresh()->role);
+        $this->assertSame('active', $user->fresh()->status);
+        $this->assertDatabaseCount('audit_logs', 0);
     }
 }

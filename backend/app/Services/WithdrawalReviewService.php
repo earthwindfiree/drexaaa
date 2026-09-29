@@ -78,6 +78,21 @@ class WithdrawalReviewService
                     'tier_id' => $account->tier_id,
                 ],
             );
+            app(UserNotificationService::class)->create(
+                $withdrawal->user,
+                'financial',
+                'Withdrawal approved',
+                'Withdrawal #'.$withdrawal->id.' was approved and deducted from your managed balance.',
+            );
+
+            if ($oldValues['tier_id'] !== $account->tier_id) {
+                app(UserNotificationService::class)->create(
+                    $withdrawal->user,
+                    'account',
+                    'Tier changed',
+                    'Your account tier changed after the managed balance update.',
+                );
+            }
 
             return $withdrawal->refresh();
         }, 3);
@@ -132,6 +147,12 @@ class WithdrawalReviewService
                     'managed_balance' => $account->managed_balance,
                     'tier_id' => $account->tier_id,
                 ],
+            );
+            app(UserNotificationService::class)->create(
+                $withdrawal->user,
+                'financial',
+                'Withdrawal rejected',
+                'Withdrawal #'.$withdrawal->id.' was rejected. The reserved amount is available again.',
             );
 
             return $withdrawal->refresh();

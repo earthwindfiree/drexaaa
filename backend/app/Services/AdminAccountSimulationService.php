@@ -20,7 +20,7 @@ class AdminAccountSimulationService
 
     public function update(Account $account, User $actor, array $changes): Account
     {
-        Gate::forUser($actor)->authorize('admin');
+        Gate::forUser($actor)->authorize('super-admin');
 
         try {
             $normalizedChanges = $this->normalizeChanges($changes);
@@ -84,6 +84,12 @@ class AdminAccountSimulationService
                     $adjustmentAmount,
                     'Administrative simulation adjustment: '.implode(', ', $changedFields),
                 );
+                app(UserNotificationService::class)->create(
+                    $account->user,
+                    'financial',
+                    'Account adjusted',
+                    'An administrator made a simulated financial account adjustment.',
+                );
             }
 
             $this->auditLogService->record(
@@ -98,6 +104,15 @@ class AdminAccountSimulationService
                     'transaction_id' => $transaction?->id,
                 ],
             );
+
+            if ($oldValues['tier_id'] !== $newValues['tier_id']) {
+                app(UserNotificationService::class)->create(
+                    $account->user,
+                    'account',
+                    'Tier changed',
+                    'Your account tier changed after the managed balance update.',
+                );
+            }
 
             return $account->refresh();
         }, 3);

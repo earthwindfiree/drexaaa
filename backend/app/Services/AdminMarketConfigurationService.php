@@ -38,7 +38,7 @@ class AdminMarketConfigurationService
 
     public function updateAssetStatus(Asset $asset, User $actor, bool $active): Asset
     {
-        Gate::forUser($actor)->authorize('admin');
+        Gate::forUser($actor)->authorize('super-admin');
 
         return DB::transaction(function () use ($asset, $actor, $active): Asset {
             $asset = Asset::query()->lockForUpdate()->findOrFail($asset->getKey());
@@ -62,7 +62,7 @@ class AdminMarketConfigurationService
 
     public function createWallet(Asset $asset, User $actor, string $walletAddress, ?string $network, bool $active): AssetWallet
     {
-        Gate::forUser($actor)->authorize('admin');
+        Gate::forUser($actor)->authorize('super-admin');
 
         return DB::transaction(function () use ($asset, $actor, $walletAddress, $network, $active): AssetWallet {
             $asset = Asset::query()->lockForUpdate()->findOrFail($asset->getKey());
@@ -102,7 +102,7 @@ class AdminMarketConfigurationService
 
     public function updateWalletStatus(AssetWallet $wallet, User $actor, bool $active): AssetWallet
     {
-        Gate::forUser($actor)->authorize('admin');
+        Gate::forUser($actor)->authorize('super-admin');
 
         return DB::transaction(function () use ($wallet, $actor, $active): AssetWallet {
             $wallet = AssetWallet::query()->lockForUpdate()->findOrFail($wallet->getKey());

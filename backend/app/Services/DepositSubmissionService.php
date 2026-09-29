@@ -93,6 +93,13 @@ class DepositSubmissionService
             $deposit->status = DepositStatus::Pending;
             $deposit->save();
 
+            app(UserNotificationService::class)->create(
+                $user,
+                'financial',
+                'Deposit submitted',
+                'Deposit #'.$deposit->id.' was submitted and is pending review.',
+            );
+
             return $deposit;
         }, 3);
     }

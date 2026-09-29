@@ -86,6 +86,13 @@ class WithdrawalSubmissionService
             $withdrawal->status = WithdrawalStatus::Pending;
             $withdrawal->save();
 
+            app(UserNotificationService::class)->create(
+                $user,
+                'financial',
+                'Withdrawal submitted',
+                'Withdrawal #'.$withdrawal->id.' was submitted and is pending review.',
+            );
+
             return $withdrawal;
         }, 3);
     }
