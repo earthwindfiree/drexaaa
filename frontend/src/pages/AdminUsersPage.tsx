@@ -1,16 +1,19 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { ApiError, apiRequest } from '../lib/api'
+import { ApiError, apiRequest, initializeCsrfCookie } from '../lib/api'
+import { useAuth } from '../features/auth/AuthContext'
 import type { AdminUser, AdminUsersResponse } from '../types/api'
 
 function AdminUsersPage() {
   const [searchParams, setSearchParams] = useSearchParams()
+  const { user: currentUser } = useAuth()
   const [users, setUsers] = useState<AdminUser[]>([])
   const [meta, setMeta] = useState<AdminUsersResponse['meta'] | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [searchInput, setSearchInput] = useState(searchParams.get('search') ?? '')
   const [tierInput, setTierInput] = useState(searchParams.get('tier') ?? '')
+  const [refreshToken, setRefreshToken] = useState(0)
 
   useEffect(() => {
     let active = true
@@ -44,7 +47,7 @@ function AdminUsersPage() {
     return () => {
       active = false
     }
-  }, [searchParams])
+  }, [searchParams, refreshToken])
 
   function applyFilters(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -143,7 +146,7 @@ function AdminUsersPage() {
       {!loading && !error && users.length > 0 && (
         <>
           <div className="overflow-x-auto border border-slate-200 bg-white shadow-sm">
-            <table className="w-full min-w-[980px] text-left text-sm">
+            <table className="w-full min-w-[1200px] text-left text-sm">
               <thead className="border-b border-slate-200 bg-slate-50 text-xs uppercase tracking-[0.12em] text-slate-500">
                 <tr>
                   <th className="px-4 py-3 font-semibold">User</th>
@@ -153,10 +156,11 @@ function AdminUsersPage() {
                   <th className="px-4 py-3 font-semibold">Tier</th>
                   <th className="px-4 py-3 font-semibold">Trading</th>
                   <th className="px-4 py-3 font-semibold">Joined</th>
+                  {currentUser?.role === 'super_admin' && <th className="px-4 py-3 font-semibold">Access management</th>}
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                {users.map((user) => <UserRow key={user.id} user={user} />)}
+                {users.map((user) => <UserRow key={user.id} user={user} canManageAccess={currentUser?.role === 'super_admin'} onAccessUpdated={() => setRefreshToken((value) => value + 1)} />)}
               </tbody>
             </table>
           </div>
@@ -177,7 +181,7 @@ function AdminUsersPage() {
   }
 }
 
-function UserRow({ user }: { user: AdminUser }) {
+function UserRow({ user, canManageAccess, onAccessUpdated }: { user: AdminUser; canManageAccess: boolean; onAccessUpdated: () => void }) {
   return (
     <tr className="align-top text-slate-700">
       <td className="px-4 py-4">
@@ -193,7 +197,61 @@ function UserRow({ user }: { user: AdminUser }) {
       <td className="px-4 py-4">{user.account?.tier?.name ?? 'Unassigned'}</td>
       <td className="px-4 py-4 capitalize">{user.account?.trading_status ?? 'Not configured'}</td>
       <td className="px-4 py-4 whitespace-nowrap">{formatDate(user.created_at)}</td>
+      {canManageAccess && <td className="px-4 py-4"><UserAccessControls user={user} onSaved={onAccessUpdated} /></td>}
     </tr>
+  )
+}
+
+function UserAccessControls({ user, onSaved }: { user: AdminUser; onSaved: () => void }) {
+  const [role, setRole] = useState(user.role)
+  const [status, setStatus] = useState(user.status)
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  async function save(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    const changes: Record<string, string> = {}
+    if (role !== user.role) changes.role = role
+    if (['admin', 'super_admin'].includes(user.role) && status !== user.status) changes.status = status
+    if (Object.keys(changes).length === 0) return
+
+    setSaving(true)
+    setError(null)
+
+    try {
+      await initializeCsrfCookie()
+      await apiRequest(`/api/admin/users/${user.id}/access`, {
+        method: 'PATCH',
+        body: JSON.stringify(changes),
+      })
+      onSaved()
+    } catch (requestError: unknown) {
+      setError(errorMessage(requestError, 'Unable to update user access.'))
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const changed = role !== user.role || (['admin', 'super_admin'].includes(user.role) && status !== user.status)
+
+  return (
+    <form onSubmit={(event) => void save(event)} className="min-w-52 space-y-2">
+      <select aria-label={`Role for ${user.email}`} value={role} onChange={(event) => setRole(event.target.value)} className="block w-full border border-slate-300 bg-white px-2 py-1.5 text-xs text-slate-900">
+        <option value="user">User</option>
+        <option value="admin">Admin</option>
+        <option value="super_admin">Super admin</option>
+      </select>
+      {['admin', 'super_admin'].includes(user.role) && (
+        <select aria-label={`Admin account status for ${user.email}`} value={status} onChange={(event) => setStatus(event.target.value)} className="block w-full border border-slate-300 bg-white px-2 py-1.5 text-xs text-slate-900">
+          <option value="active">Active</option>
+          <option value="suspended">Suspended</option>
+        </select>
+      )}
+      <button type="submit" disabled={!changed || saving} className="border border-slate-300 px-2 py-1.5 text-xs font-semibold text-slate-700 disabled:opacity-50">
+        {saving ? 'Saving...' : 'Save access'}
+      </button>
+      {error && <p role="alert" className="max-w-52 text-xs text-rose-700">{error}</p>}
+    </form>
   )
 }
 
@@ -218,6 +276,14 @@ function Pagination({ meta, onPageChange }: { meta: NonNullable<AdminUsersRespon
 
 function formatDate(value: string): string {
   return new Intl.DateTimeFormat('en', { dateStyle: 'medium' }).format(new Date(value))
+}
+
+function errorMessage(error: unknown, fallback: string): string {
+  if (error instanceof ApiError && Object.values(error.errors).length > 0) {
+    return Object.values(error.errors).flat().join(' ')
+  }
+
+  return error instanceof Error ? error.message : fallback
 }
 
 export default AdminUsersPage

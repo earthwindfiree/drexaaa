@@ -59,6 +59,14 @@ class AdminAuthorizationTest extends TestCase
         $this->assertFalse(Gate::forUser(User::factory()->create(['role' => 'admin', 'status' => 'suspended']))->allows('admin'));
     }
 
+    public function test_super_admin_gate_accepts_only_active_super_admins(): void
+    {
+        $this->assertFalse(Gate::forUser(User::factory()->create())->allows('super-admin'));
+        $this->assertFalse(Gate::forUser(User::factory()->create(['role' => 'admin']))->allows('super-admin'));
+        $this->assertTrue(Gate::forUser(User::factory()->create(['role' => 'super_admin']))->allows('super-admin'));
+        $this->assertFalse(Gate::forUser(User::factory()->create(['role' => 'super_admin', 'status' => 'suspended']))->allows('super-admin'));
+    }
+
     public function test_can_admin_middleware_rejects_guests_and_normal_users(): void
     {
         Route::middleware(['auth:sanctum', 'can:admin'])

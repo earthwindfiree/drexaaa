@@ -78,6 +78,21 @@ class DepositReviewService
                     'tier_id' => $account->tier_id,
                 ],
             );
+            app(UserNotificationService::class)->create(
+                $deposit->user,
+                'financial',
+                'Deposit approved',
+                'Deposit #'.$deposit->id.' was approved and credited to your managed balance.',
+            );
+
+            if ($oldValues['tier_id'] !== $account->tier_id) {
+                app(UserNotificationService::class)->create(
+                    $deposit->user,
+                    'account',
+                    'Tier changed',
+                    'Your account tier changed after the managed balance update.',
+                );
+            }
 
             return $deposit->refresh();
         }, 3);
@@ -140,6 +155,12 @@ class DepositReviewService
                     'pending_balance' => $account->pending_balance,
                     'tier_id' => $account->tier_id,
                 ],
+            );
+            app(UserNotificationService::class)->create(
+                $deposit->user,
+                'financial',
+                'Deposit rejected',
+                'Deposit #'.$deposit->id.' was rejected. The pending balance has been released.',
             );
 
             return $deposit->refresh();

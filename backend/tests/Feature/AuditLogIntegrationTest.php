@@ -99,7 +99,7 @@ class AuditLogIntegrationTest extends TestCase
     public function test_market_price_change_and_performance_snapshot_are_audited(): void
     {
         [$user, $account] = $this->createUserWithBalance('1000');
-        $admin = User::factory()->create(['role' => 'admin']);
+        $admin = User::factory()->create(['role' => 'super_admin']);
         $asset = Asset::where('symbol', 'BTC')->firstOrFail();
         $priceBefore = $asset->marketPrice()->firstOrFail()->current_price;
 
@@ -133,7 +133,7 @@ class AuditLogIntegrationTest extends TestCase
     public function test_audit_failure_rolls_back_deposit_and_withdrawal_mutations(): void
     {
         [$user, $account] = $this->createUserWithBalance('1000');
-        $admin = User::factory()->create(['role' => 'admin']);
+        $admin = User::factory()->create(['role' => 'super_admin']);
         $deposit = $this->submitDeposit($user, '0.01', 'audit-rollback-ref');
         $this->failAfterAuditRecord();
 
@@ -170,7 +170,7 @@ class AuditLogIntegrationTest extends TestCase
     public function test_audit_failure_rolls_back_price_and_snapshot_mutations(): void
     {
         [$user, $account] = $this->createUserWithBalance('1000');
-        $admin = User::factory()->create(['role' => 'admin']);
+        $admin = User::factory()->create(['role' => 'super_admin']);
         $asset = Asset::where('symbol', 'BTC')->firstOrFail();
         $priceBefore = $asset->marketPrice()->firstOrFail()->current_price;
         $this->failAfterAuditRecord();

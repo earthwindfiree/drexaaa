@@ -57,6 +57,11 @@ class DepositWorkflowTest extends TestCase
         $this->assertSame('25012.34', $account->pending_balance);
         $this->assertSame('100.00', $account->managed_balance);
         $this->assertSame($tierId, $account->tier_id);
+        $this->assertDatabaseHas('user_notifications', [
+            'user_id' => $user->id,
+            'category' => 'financial',
+            'title' => 'Deposit submitted',
+        ]);
     }
 
     public function test_transaction_reference_is_required(): void
@@ -156,6 +161,8 @@ class DepositWorkflowTest extends TestCase
         $this->assertSame('Elevation', $account->tier->name);
         $this->assertSame($reviewer->id, $confirmed->reviewed_by);
         $this->assertNotNull($confirmed->reviewed_at);
+        $this->assertDatabaseHas('user_notifications', ['user_id' => $user->id, 'title' => 'Deposit approved']);
+        $this->assertDatabaseHas('user_notifications', ['user_id' => $user->id, 'title' => 'Tier changed']);
     }
 
     public function test_confirmed_deposit_cannot_be_confirmed_twice(): void
@@ -175,6 +182,7 @@ class DepositWorkflowTest extends TestCase
         $account->refresh();
         $this->assertSame('500.00', $account->managed_balance);
         $this->assertSame('0.00', $account->pending_balance);
+        $this->assertSame(1, $user->notifications()->where('title', 'Deposit approved')->count());
     }
 
     public function test_rejection_releases_pending_value_without_changing_managed_balance_or_tier(): void
@@ -196,6 +204,7 @@ class DepositWorkflowTest extends TestCase
         $this->assertSame('12.34', $account->pending_balance);
         $this->assertSame('100.00', $account->managed_balance);
         $this->assertSame('Foundation', $account->tier->name);
+        $this->assertDatabaseHas('user_notifications', ['user_id' => $user->id, 'title' => 'Deposit rejected']);
     }
 
     public function test_rejected_deposit_cannot_be_rejected_twice(): void
@@ -215,6 +224,7 @@ class DepositWorkflowTest extends TestCase
         $account->refresh();
         $this->assertSame('0.00', $account->pending_balance);
         $this->assertSame('0.00', $account->managed_balance);
+        $this->assertSame(1, $user->notifications()->where('title', 'Deposit rejected')->count());
     }
 
     public function test_normal_user_cannot_review_a_deposit(): void
