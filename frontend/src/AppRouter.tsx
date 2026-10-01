@@ -19,6 +19,11 @@ import AdminTiersPage from './pages/AdminTiersPage'
 import AdminSettingsPage from './pages/AdminSettingsPage'
 import PasswordResetPage from './pages/PasswordResetPage'
 import EmailVerificationPage from './pages/EmailVerificationPage'
+import UserDashboardPage from './pages/UserDashboardPage'
+import UserPortfolioPage from './pages/UserPortfolioPage'
+import UserMarketsPage from './pages/UserMarketsPage'
+import UserWalletPage from './pages/UserWalletPage'
+import UserTransactionsPage from './pages/UserTransactionsPage'
 import HomePage from './pages/HomePage'
 import NotFoundPage from './pages/NotFoundPage'
 import RoutePlaceholder from './components/RoutePlaceholder'
@@ -69,8 +74,15 @@ function AppRouter() {
             </Route>
             <Route element={<VerifiedUserRoute />}>
               <Route element={<AppLayout />}>
+                <Route path="/dashboard" element={<UserDashboardPage />} />
+                <Route path="/portfolio" element={<UserPortfolioPage />} />
+                <Route path="/markets" element={<UserMarketsPage />} />
+                <Route path="/wallet" element={<UserWalletPage />} />
+                <Route path="/transactions" element={<UserTransactionsPage />} />
                 {userRoutes.map((route) => (
-                  <Route key={route.path} path={route.path} element={<RoutePlaceholder title={route.title} />} />
+                  route.path !== '/dashboard' && route.path !== '/portfolio' && route.path !== '/markets' && route.path !== '/wallet' && route.path !== '/transactions' && (
+                    <Route key={route.path} path={route.path} element={<RoutePlaceholder title={route.title} />} />
+                  )
                 ))}
               </Route>
             </Route>
