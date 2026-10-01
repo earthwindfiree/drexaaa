@@ -3,6 +3,168 @@ export interface ApiErrorPayload {
   errors?: Record<string, string[]>
 }
 
+export interface UserDashboardAccount {
+  id: number
+  managed_balance: string
+  pending_balance: string
+  total_profit_loss: string
+  performance_percentage: string
+  trading_status: string
+  tier: {
+    id: number
+    name: string
+    minimum_balance: string
+    description: string
+    strategy: {
+      id: number
+      name: string
+      description: string
+      risk_profile: string
+      active: boolean
+    } | null
+  } | null
+}
+
+export interface UserDashboardTransaction {
+  id: number
+  type: string
+  status: string
+  asset: { id: number; symbol: string; name: string } | null
+  crypto_amount: string | null
+  usd_amount: string
+  reference: string
+  description: string | null
+  occurred_at: string | null
+}
+
+export interface UserDashboardResponse {
+  data: {
+    account: UserDashboardAccount
+    recent_transactions: UserDashboardTransaction[]
+  }
+}
+
+export interface UserPerformanceSnapshot {
+  id: number
+  account_value: string
+  profit_loss: string
+  performance_percentage: string
+  snapshot_at: string | null
+}
+
+export interface UserPortfolioResponse {
+  data: {
+    id: number
+    managed_balance: string
+    pending_balance: string
+    total_profit_loss: string
+    performance_percentage: string
+    trading_status: string
+    tier: UserDashboardAccount['tier']
+    performance_history: UserPerformanceSnapshot[]
+  }
+}
+
+export interface UserNotificationsResponse {
+  unread_count: number
+}
+
+export interface UserMarketAsset {
+  id: number
+  symbol: string
+  name: string
+  active: boolean
+  market_price: {
+    current_price: string | null
+    change_24h_percentage: string | null
+  } | null
+}
+
+export interface UserMarketsResponse {
+  data: UserMarketAsset[]
+}
+
+export interface UserWalletAsset {
+  id: number
+  symbol: string
+  name: string
+  market_price: {
+    current_price: string
+    change_24h_percentage: string
+  } | null
+  wallets: Array<{
+    network: string | null
+    wallet_address: string
+  }>
+}
+
+export interface UserWalletDeposit {
+  id: number
+  asset: { id: number; symbol: string; name: string } | null
+  crypto_amount: string
+  price_snapshot: string
+  usd_value: string
+  wallet: { network: string | null; wallet_address: string } | null
+  transaction_reference: string
+  status: string
+  rejection_reason: string | null
+  submitted_at: string | null
+  reviewed_at: string | null
+}
+
+export interface UserWalletWithdrawal {
+  id: number
+  asset: { id: number; symbol: string; name: string } | null
+  amount: string
+  destination_wallet: string
+  crypto_amount: string | null
+  price_snapshot: string | null
+  status: string
+  rejection_reason: string | null
+  submitted_at: string | null
+  reviewed_at: string | null
+}
+
+export interface UserWalletData {
+  account: {
+    managed_balance: string
+    pending_balance: string
+    withdrawable_amount: string
+  }
+  assets: UserWalletAsset[]
+  deposits: UserWalletDeposit[]
+  withdrawals: UserWalletWithdrawal[]
+}
+
+export interface UserWalletResponse {
+  data: UserWalletData
+}
+
+export interface UserTransaction {
+  id: number
+  type: string
+  status: string
+  asset: { id: number; symbol: string; name: string } | null
+  crypto_amount: string | null
+  usd_amount: string
+  price_snapshot: string | null
+  reference: string
+  description: string | null
+  occurred_at: string | null
+}
+
+export interface UserTransactionsResponse {
+  data: UserTransaction[]
+  meta: {
+    current_page: number
+    last_page: number
+    per_page: number
+    from: number | null
+    to: number | null
+    total: number
+  }
+}
+
 export interface AdminUserAccount {
   id: number
   managed_balance: string
