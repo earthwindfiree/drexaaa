@@ -55,7 +55,7 @@ function LandingPage() {
   useDocumentTitle('Home')
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100">
+    <div className="public-shell text-slate-100">
       <header className="mx-auto flex max-w-7xl items-center justify-between px-6 py-6 lg:px-8">
         <div className="flex items-center gap-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-cyan-500/15 text-lg font-bold text-cyan-300 ring-1 ring-cyan-400/30">
@@ -79,7 +79,7 @@ function LandingPage() {
           <Link to="/login" className="hidden rounded-full border border-slate-700 px-4 py-2 text-sm text-slate-200 transition hover:border-slate-500 hover:text-white sm:inline-flex">
             Login
           </Link>
-          <Link to="/register" className="inline-flex rounded-full bg-cyan-400 px-4 py-2 text-sm font-medium text-slate-950 transition hover:bg-cyan-300">
+          <Link to="/register" className="public-primary-action inline-flex rounded-full px-4 py-2 text-sm font-medium transition">
             Get Started
           </Link>
         </div>
@@ -87,7 +87,7 @@ function LandingPage() {
 
       <main>
         <section className="relative overflow-hidden">
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(34,211,238,0.18),transparent_40%),radial-gradient(circle_at_right,_rgba(59,130,246,0.15),transparent_30%)]" />
+          <div className="public-hero-light absolute inset-0" />
           <div className="relative mx-auto grid max-w-7xl gap-12 px-6 pb-20 pt-10 lg:grid-cols-[1.1fr_0.9fr] lg:px-8 lg:pb-28 lg:pt-16">
             <div className="max-w-xl">
               <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-cyan-500/30 bg-cyan-500/10 px-3 py-1.5 text-xs font-medium uppercase tracking-[0.18em] text-cyan-200">
@@ -101,7 +101,7 @@ function LandingPage() {
               </p>
 
               <div className="mt-8 flex flex-col gap-4 sm:flex-row">
-                <Link to="/register" className="inline-flex items-center justify-center rounded-full bg-cyan-400 px-6 py-3.5 text-sm font-semibold text-slate-950 transition hover:bg-cyan-300">
+                <Link to="/register" className="public-primary-action inline-flex items-center justify-center rounded-full px-6 py-3.5 text-sm font-semibold transition">
                   Get Started
                 </Link>
                 <a href="#strategies" className="inline-flex items-center justify-center rounded-full border border-slate-700 px-6 py-3.5 text-sm font-semibold text-slate-100 transition hover:border-slate-500 hover:bg-slate-900">
@@ -156,7 +156,7 @@ function LandingPage() {
                     </div>
                     <div className="mt-4 flex items-end gap-2">
                       {[35, 52, 40, 68, 78, 92].map((height, index) => (
-                        <div key={index} className="flex-1 rounded-t-xl bg-gradient-to-t from-cyan-500 to-blue-400" style={{ height: `${height}px` }} />
+                        <div key={index} className="flex-1 rounded-t-xl bg-gradient-to-t from-[#2d7774] to-[#81c9c3]" style={{ height: `${height}px` }} />
                       ))}
                     </div>
                   </div>
@@ -311,7 +311,7 @@ function LandingPage() {
             <p className="text-xs uppercase tracking-[0.22em] text-cyan-200">Ready to begin</p>
             <h2 className="mt-3 text-3xl font-semibold text-white sm:text-4xl">Build a premium managed-trading presentation without real trading risk.</h2>
             <div className="mt-6 flex justify-center">
-              <Link to="/register" className="inline-flex rounded-full bg-white px-6 py-3.5 text-sm font-semibold text-slate-950 transition hover:bg-slate-200">
+              <Link to="/register" className="public-primary-action inline-flex rounded-full px-6 py-3.5 text-sm font-semibold transition">
                 Get Started
               </Link>
             </div>
