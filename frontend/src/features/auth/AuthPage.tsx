@@ -237,7 +237,7 @@ function AuthPage({ mode }: { mode: AuthMode }) {
           <button
             type="submit"
             disabled={submitting}
-            className="inline-flex w-full items-center justify-center rounded-lg bg-cyan-400 px-4 py-3 text-sm font-semibold text-slate-950 transition hover:bg-cyan-300 disabled:cursor-wait disabled:opacity-60"
+            className="public-primary-action inline-flex w-full items-center justify-center rounded-lg px-4 py-3 text-sm font-semibold transition disabled:cursor-wait disabled:opacity-60"
           >
             {submitting ? 'Please wait…' : isRegister ? 'Create account' : 'Log in'}
           </button>

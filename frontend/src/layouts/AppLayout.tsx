@@ -61,7 +61,7 @@ function AppLayout() {
     : guestNavigation
 
   return (
-    <div className="flex min-h-screen flex-col bg-slate-950 text-slate-100">
+    <div className="public-shell flex flex-col text-slate-100">
       <header className="border-b border-slate-800">
         <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-4 px-6 py-5 lg:px-8">
           <Link to="/" className="text-lg font-semibold tracking-tight text-white">

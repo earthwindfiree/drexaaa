@@ -69,6 +69,36 @@ export interface UserNotificationsResponse {
   unread_count: number
 }
 
+export interface UserNotification {
+  id: number
+  category: string
+  title: string
+  message: string
+  read_at: string | null
+  created_at: string | null
+}
+
+export interface UserNotificationsListResponse {
+  data: UserNotification[]
+  unread_count: number
+  meta: {
+    current_page: number
+    last_page: number
+    per_page: number
+    from: number | null
+    to: number | null
+    total: number
+  }
+}
+
+export interface UserNotificationResponse {
+  data: UserNotification
+}
+
+export interface UserNotificationsMarkAllResponse {
+  data: { updated: number }
+}
+
 export interface UserMarketAsset {
   id: number
   symbol: string
