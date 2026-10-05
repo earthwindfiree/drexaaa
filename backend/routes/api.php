@@ -4,6 +4,7 @@ use App\Http\Controllers\Api\Admin\AdminAccountsController;
 use App\Http\Controllers\Api\Admin\AdminAuditLogsController;
 use App\Http\Controllers\Api\Admin\AdminDepositsController;
 use App\Http\Controllers\Api\Admin\AdminMarketsController;
+use App\Http\Controllers\Api\Admin\AdminNotificationsController;
 use App\Http\Controllers\Api\Admin\AdminStrategiesController;
 use App\Http\Controllers\Api\Admin\AdminTiersController;
 use App\Http\Controllers\Api\Admin\AdminTransactionsController;
@@ -11,6 +12,7 @@ use App\Http\Controllers\Api\Admin\AdminUsersController;
 use App\Http\Controllers\Api\Admin\AdminWithdrawalsController;
 use App\Http\Controllers\Api\Admin\DashboardSummaryController;
 use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\PublicStrategiesController;
 use App\Http\Controllers\Api\UserAccountController;
 use App\Http\Controllers\Api\UserDepositsController;
 use App\Http\Controllers\Api\UserMarketsController;
@@ -27,6 +29,10 @@ Route::middleware('api')->get('/health', function () {
         'message' => 'API running',
     ]);
 });
+
+Route::get('/strategies', [PublicStrategiesController::class, 'index']);
+Route::get('/strategies/{strategy}', [PublicStrategiesController::class, 'show'])
+    ->whereNumber('strategy');
 
 Route::prefix('auth')->group(function () {
     Route::get('/countries', [AuthController::class, 'countries']);
@@ -87,6 +93,7 @@ Route::prefix('admin')->middleware(['auth:sanctum', 'can:admin'])->group(functio
     Route::post('/withdrawals/{withdrawal}/approve', [AdminWithdrawalsController::class, 'approve']);
     Route::post('/withdrawals/{withdrawal}/reject', [AdminWithdrawalsController::class, 'reject']);
     Route::get('/transactions', [AdminTransactionsController::class, 'index']);
+    Route::get('/notifications', [AdminNotificationsController::class, 'index']);
     Route::get('/audit-logs', [AdminAuditLogsController::class, 'index']);
     Route::get('/tiers', [AdminTiersController::class, 'index']);
     Route::patch('/tiers/{tier}', [AdminTiersController::class, 'update']);

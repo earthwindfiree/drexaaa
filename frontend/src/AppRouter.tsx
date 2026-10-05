@@ -14,6 +14,7 @@ import AdminDepositsPage from './pages/AdminDepositsPage'
 import AdminWithdrawalDetailPage from './pages/AdminWithdrawalDetailPage'
 import AdminWithdrawalsPage from './pages/AdminWithdrawalsPage'
 import AdminTransactionsPage from './pages/AdminTransactionsPage'
+import AdminNotificationsPage from './pages/AdminNotificationsPage'
 import AdminAuditLogsPage from './pages/AdminAuditLogsPage'
 import AdminTiersPage from './pages/AdminTiersPage'
 import AdminSettingsPage from './pages/AdminSettingsPage'
@@ -28,6 +29,7 @@ import UserSettingsPage from './pages/UserSettingsPage'
 import UserNotificationsPage from './pages/UserNotificationsPage'
 import HomePage from './pages/HomePage'
 import NotFoundPage from './pages/NotFoundPage'
+import PublicStrategyDetailsPage from './pages/PublicStrategyDetailsPage'
 import RoutePlaceholder from './components/RoutePlaceholder'
 
 const userRoutes = [
@@ -60,6 +62,7 @@ function AppRouter() {
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<HomePage />} />
+          <Route path="/strategies/:strategyId" element={<PublicStrategyDetailsPage />} />
           <Route element={<GuestRoute />}>
             <Route element={<AppLayout />}>
               <Route path="/login" element={<AuthPage mode="login" />} />
@@ -102,10 +105,11 @@ function AppRouter() {
               <Route path="/admin/withdrawals" element={<AdminWithdrawalsPage />} />
               <Route path="/admin/withdrawals/:withdrawalId" element={<AdminWithdrawalDetailPage />} />
               <Route path="/admin/transactions" element={<AdminTransactionsPage />} />
+              <Route path="/admin/notifications" element={<AdminNotificationsPage />} />
               <Route path="/admin/audit-logs" element={<AdminAuditLogsPage />} />
               <Route path="/admin/tiers" element={<AdminTiersPage />} />
               <Route path="/admin/settings" element={<AdminSettingsPage />} />
-              {adminRoutes.filter((route) => route.path !== '/admin' && route.path !== '/admin/users' && route.path !== '/admin/accounts' && route.path !== '/admin/markets' && route.path !== '/admin/deposits' && route.path !== '/admin/withdrawals' && route.path !== '/admin/transactions' && route.path !== '/admin/audit-logs' && route.path !== '/admin/tiers' && route.path !== '/admin/settings').map((route) => (
+              {adminRoutes.filter((route) => route.path !== '/admin' && route.path !== '/admin/users' && route.path !== '/admin/accounts' && route.path !== '/admin/markets' && route.path !== '/admin/deposits' && route.path !== '/admin/withdrawals' && route.path !== '/admin/transactions' && route.path !== '/admin/notifications' && route.path !== '/admin/audit-logs' && route.path !== '/admin/tiers' && route.path !== '/admin/settings').map((route) => (
                 <Route key={route.path} path={route.path} element={<RoutePlaceholder title={route.title} />} />
               ))}
               </Route>
