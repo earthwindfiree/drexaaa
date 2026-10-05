@@ -4,6 +4,8 @@ namespace App\Services;
 
 use App\Models\User;
 use App\Models\UserNotification;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Validation\ValidationException;
@@ -41,6 +43,31 @@ class UserNotificationService
     public function history(User $user): HasMany
     {
         return $user->notifications()->orderByDesc('created_at')->orderByDesc('id');
+    }
+
+    public function adminHistory(array $filters): LengthAwarePaginator
+    {
+        return UserNotification::query()
+            ->with('user:id,name,email')
+            ->when($filters['status'] ?? 'all', function (Builder $query, string $status): void {
+                $query
+                    ->when($status === 'read', fn (Builder $query) => $query->whereNotNull('read_at'))
+                    ->when($status === 'unread', fn (Builder $query) => $query->whereNull('read_at'));
+            })
+            ->when($filters['category'] ?? null, fn (Builder $query, string $category) => $query->where('category', $category))
+            ->when($filters['search'] ?? null, function (Builder $query, string $search): void {
+                $query->where(function (Builder $query) use ($search): void {
+                    $query->where('title', 'like', "%{$search}%")
+                        ->orWhere('message', 'like', "%{$search}%")
+                        ->orWhereHas('user', function (Builder $query) use ($search): void {
+                            $query->where('name', 'like', "%{$search}%")
+                                ->orWhere('email', 'like', "%{$search}%");
+                        });
+                });
+            })
+            ->orderByDesc('created_at')
+            ->orderByDesc('id')
+            ->paginate($filters['per_page'] ?? 15, ['*'], 'page', $filters['page'] ?? 1);
     }
 
     public function markRead(User $user, int $notificationId): UserNotification

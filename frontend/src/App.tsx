@@ -1,5 +1,8 @@
 import './App.css'
+import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { apiRequest } from './lib/api'
+import type { PublicStrategiesResponse } from './types/api'
 import { useDocumentTitle } from './hooks/useDocumentTitle'
 
 const navItems = [
@@ -24,13 +27,6 @@ const steps = [
   'Monitor Account',
 ]
 
-const strategies = [
-  { name: 'Foundation', min: '$100+', profile: 'Measured exposure and capital preservation emphasis.', benefit: 'Ideal for new traders looking for a steady, monitored onboarding path.' },
-  { name: 'Momentum', min: '$1,000+', profile: 'Balanced exposure with active monitoring and tactical allocation.', benefit: 'A versatile profile designed for dynamic but structured portfolio management.' },
-  { name: 'Elevation', min: '$5,000+', profile: 'Broader opportunities and more active management.', benefit: 'Built for users seeking a more ambitious managed allocation profile.' },
-  { name: 'Apex', min: '$25,000+', profile: 'Premium positioning with comprehensive market review.', benefit: 'A higher-touch strategy profile tailored for larger managed balances.' },
-]
-
 const markets = [
   { symbol: 'BTC', name: 'Bitcoin', price: '$67,540', change: '+3.42%' },
   { symbol: 'ETH', name: 'Ethereum', price: '$3,420', change: '+2.17%' },
@@ -52,7 +48,37 @@ const testimonials = [
 ]
 
 function LandingPage() {
+  const [strategies, setStrategies] = useState<PublicStrategiesResponse['data']>([])
+  const [strategiesLoading, setStrategiesLoading] = useState(true)
+  const [strategiesError, setStrategiesError] = useState<string | null>(null)
+  const [strategyRefresh, setStrategyRefresh] = useState(0)
+
   useDocumentTitle('Home')
+
+  useEffect(() => {
+    let active = true
+
+    void apiRequest<PublicStrategiesResponse>('/api/strategies')
+      .then((response) => {
+        if (!active) return
+        if (!response || !Array.isArray(response.data)) {
+          setStrategiesError('Strategy data is unavailable right now.')
+          return
+        }
+
+        setStrategies(response.data)
+      })
+      .catch((error: unknown) => {
+        if (active) setStrategiesError(error instanceof Error ? error.message : 'Unable to load strategies.')
+      })
+      .finally(() => {
+        if (active) setStrategiesLoading(false)
+      })
+
+    return () => {
+      active = false
+    }
+  }, [strategyRefresh])
 
   return (
     <div className="public-shell text-slate-100">
@@ -210,19 +236,57 @@ function LandingPage() {
             <h2 className="mt-3 text-3xl font-semibold text-white">Tiered profiles built for different account sizes.</h2>
           </div>
 
+          {strategiesLoading && (
+            <div className="grid gap-6 lg:grid-cols-2 xl:grid-cols-4" role="status" aria-label="Loading strategies">
+              {[0, 1, 2, 3].map((item) => (
+                <div key={item} className="animate-pulse rounded-2xl border border-slate-800 bg-slate-900/70 p-5">
+                  <div className="h-4 w-28 rounded bg-slate-700" />
+                  <div className="mt-5 h-7 w-32 rounded bg-slate-700" />
+                  <div className="mt-5 h-16 rounded bg-slate-800" />
+                </div>
+              ))}
+              <span className="sr-only">Loading strategy information...</span>
+            </div>
+          )}
+
+          {!strategiesLoading && strategiesError && (
+            <div role="alert" className="rounded-2xl border border-rose-400/20 bg-rose-950/30 p-5 text-sm text-rose-100">
+              <p>{strategiesError}</p>
+              <button
+                type="button"
+                onClick={() => {
+                  setStrategiesError(null)
+                  setStrategiesLoading(true)
+                  setStrategyRefresh((current) => current + 1)
+                }}
+                className="mt-3 rounded-full border border-rose-200/30 px-4 py-2 font-medium transition hover:bg-rose-50/10"
+              >
+                Try again
+              </button>
+            </div>
+          )}
+
+          {!strategiesLoading && !strategiesError && strategies.length === 0 && (
+            <p className="rounded-2xl border border-slate-800 bg-slate-900/70 p-5 text-sm text-slate-300">
+              No strategy profiles are currently available.
+            </p>
+          )}
+
+          {!strategiesLoading && !strategiesError && strategies.length > 0 && (
           <div className="grid gap-6 lg:grid-cols-2 xl:grid-cols-4">
             {strategies.map((strategy) => (
-              <article key={strategy.name} className="rounded-2xl border border-slate-800 bg-slate-900/70 p-5 transition hover:-translate-y-1 hover:border-cyan-500/30">
+              <article key={strategy.id} className="rounded-2xl border border-slate-800 bg-slate-900/70 p-5 transition hover:-translate-y-1 hover:border-cyan-500/30">
                 <div className="text-sm uppercase tracking-[0.2em] text-cyan-300">{strategy.name}</div>
-                <div className="mt-4 text-2xl font-semibold text-white">{strategy.min}</div>
-                <p className="mt-3 text-sm text-slate-300">{strategy.profile}</p>
-                <p className="mt-4 text-sm leading-6 text-slate-400">{strategy.benefit}</p>
-                <button className="mt-5 inline-flex rounded-full border border-slate-700 px-4 py-2 text-sm text-slate-100 transition hover:border-slate-500 hover:bg-slate-800">
+                <div className="mt-4 text-2xl font-semibold text-white">{formatMinimum(strategy.tiers[0]?.minimum_balance)}</div>
+                <p className="mt-3 text-sm text-slate-300">{strategy.description}</p>
+                <p className="mt-4 text-sm leading-6 text-slate-400">{strategy.risk_profile} profile</p>
+                <Link to={`/strategies/${strategy.id}`} className="mt-5 inline-flex rounded-full border border-slate-700 px-4 py-2 text-sm text-slate-100 transition hover:border-slate-500 hover:bg-slate-800">
                   View Details
-                </button>
+                </Link>
               </article>
             ))}
           </div>
+          )}
         </section>
 
         <section id="markets" className="mx-auto max-w-7xl px-6 py-12 lg:px-8">
@@ -344,7 +408,7 @@ function LandingPage() {
             <div className="font-semibold uppercase tracking-[0.18em] text-slate-300">Strategies</div>
             <ul className="mt-4 space-y-2">
               {strategies.map((strategy) => (
-                <li key={strategy.name}><a href="#" className="hover:text-white">{strategy.name}</a></li>
+                <li key={strategy.id}><Link to={`/strategies/${strategy.id}`} className="hover:text-white">{strategy.name}</Link></li>
               ))}
             </ul>
           </div>
@@ -362,6 +426,15 @@ function LandingPage() {
       </footer>
     </div>
   )
+}
+
+function formatMinimum(value: string | undefined): string {
+  if (!value || !/^\d+(?:\.\d{1,2})?$/.test(value)) return 'Qualification threshold unavailable'
+  const [whole, fraction] = value.split('.')
+  const groupedWhole = whole.replace(/\B(?=(\d{3})+(?!\d))/g, ',')
+  const amount = fraction && Number(fraction) > 0 ? `${groupedWhole}.${fraction.padEnd(2, '0')}` : groupedWhole
+
+  return `$${amount}+`
 }
 
 export default LandingPage

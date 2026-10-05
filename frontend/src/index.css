@@ -2,6 +2,21 @@
 
 :root {
   color-scheme: dark;
+  --theme-background: #0a0e11;
+  --theme-background-deep: #090d10;
+  --theme-surface: #171e21;
+  --theme-surface-raised: #181f22;
+  --theme-accent: #81c9c3;
+  --theme-accent-hover: #9ad8d2;
+  --theme-heading: #f0f4f3;
+  --theme-body: #c4d0d0;
+  --theme-muted: #89949a;
+  --theme-border: rgba(220, 239, 238, 0.085);
+  --theme-focus: #82ccc5;
+  --theme-success: #9bd3b3;
+  --theme-warning: #d8bf91;
+  --theme-danger: #e39b9b;
+  --theme-info: #a8c9c5;
   font-family: Inter, 'Segoe UI', sans-serif;
   line-height: 1.5;
   font-weight: 400;
@@ -19,9 +34,9 @@ body {
   margin: 0;
   min-width: 320px;
   background:
-    radial-gradient(circle at top, rgba(14, 165, 233, 0.18), transparent 30%),
-    #020817;
-  color: #e2e8f0;
+    radial-gradient(ellipse at 78% 0%, rgba(40, 116, 126, 0.12), transparent 33%),
+    linear-gradient(130deg, #0b1013 0%, var(--theme-background-deep) 52%, #0c1114 100%);
+  color: var(--theme-body);
 }
 
 #root {
@@ -37,10 +52,10 @@ body {
 }
 
 ::-webkit-scrollbar-track {
-  background: #020817;
+  background: var(--theme-background);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #334155;
+  background: #3a494c;
   border-radius: 9999px;
 }
