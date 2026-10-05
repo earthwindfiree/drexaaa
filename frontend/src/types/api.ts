@@ -99,6 +99,15 @@ export interface UserNotificationsMarkAllResponse {
   data: { updated: number }
 }
 
+export interface AdminNotification extends UserNotification {
+  user: { id: number; name: string; email: string } | null
+}
+
+export interface AdminNotificationsResponse {
+  data: AdminNotification[]
+  meta: UserNotificationsListResponse['meta']
+}
+
 export interface UserMarketAsset {
   id: number
   symbol: string
@@ -112,6 +121,31 @@ export interface UserMarketAsset {
 
 export interface UserMarketsResponse {
   data: UserMarketAsset[]
+}
+
+export interface PublicStrategyTier {
+  id: number
+  name: string
+  minimum_balance: string
+  description: string
+  benefits: string[]
+  features: string[]
+}
+
+export interface PublicStrategy {
+  id: number
+  name: string
+  description: string
+  risk_profile: string
+  tiers: PublicStrategyTier[]
+}
+
+export interface PublicStrategiesResponse {
+  data: PublicStrategy[]
+}
+
+export interface PublicStrategyResponse {
+  data: PublicStrategy
 }
 
 export interface UserWalletAsset {
