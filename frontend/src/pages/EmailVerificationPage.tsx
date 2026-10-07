@@ -56,24 +56,24 @@ function EmailVerificationPage() {
 
   return (
     <section className="mx-auto w-full max-w-xl px-6 py-12 sm:py-16">
-      <div className="border border-slate-800 bg-slate-900/80 p-6 shadow-xl shadow-black/20 sm:p-8">
-        <p className="text-xs font-medium uppercase tracking-[0.2em] text-cyan-300">Demo Account · Simulated Performance</p>
-        <h1 className="mt-3 text-3xl font-semibold text-white">Verify your email</h1>
-        <p className="mt-3 text-sm leading-6 text-slate-300">
-          A verification link was sent to <span className="font-medium text-white">{user?.email}</span>. Verify your address before continuing to the user platform.
+      <div className="public-card p-6 shadow-xl shadow-black/20 sm:p-8">
+        <p className="public-kicker inline-flex rounded-full px-3 py-1.5 text-xs font-medium uppercase tracking-[0.2em]">Demo Account · Simulated Performance</p>
+        <h1 className="mt-3 text-3xl font-semibold text-[var(--theme-heading)]">Verify your email</h1>
+        <p className="mt-3 text-sm leading-6 text-[var(--theme-body)]">
+          A verification link was sent to <span className="font-medium text-[var(--theme-heading)]">{user?.email}</span>. Verify your address before continuing to the user platform.
         </p>
 
-        {error && <p role="alert" className="mt-5 border border-rose-500/30 bg-rose-500/10 px-3 py-2.5 text-sm text-rose-200">{error}</p>}
-        {message && <p role="status" className="mt-5 border border-emerald-500/30 bg-emerald-500/10 px-3 py-2.5 text-sm text-emerald-200">{message}</p>}
+        {error && <p role="alert" className="public-error mt-5 rounded-lg px-3 py-2.5 text-sm">{error}</p>}
+        {message && <p role="status" className="mt-5 rounded-lg border border-[rgba(155,211,179,0.24)] bg-[rgba(155,211,179,0.1)] px-3 py-2.5 text-sm text-[var(--theme-success)]">{message}</p>}
 
         <div className="mt-6 flex flex-wrap gap-3">
-          <button type="button" onClick={() => void checkVerification()} disabled={checking} className="bg-cyan-400 px-4 py-2.5 text-sm font-semibold text-slate-950 disabled:opacity-60">
+          <button type="button" onClick={() => void checkVerification()} disabled={checking} className="public-primary-action rounded-lg px-4 py-2.5 text-sm font-semibold disabled:opacity-60">
             {checking ? 'Checking...' : 'I verified my email'}
           </button>
-          <button type="button" onClick={() => void resendVerification()} disabled={sending} className="border border-slate-600 px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-60">
+          <button type="button" onClick={() => void resendVerification()} disabled={sending} className="public-secondary-action rounded-lg px-4 py-2.5 text-sm font-semibold disabled:opacity-60">
             {sending ? 'Sending...' : 'Resend verification email'}
           </button>
-          <button type="button" onClick={() => void signOut()} className="px-3 py-2.5 text-sm font-medium text-slate-300 hover:text-white">
+          <button type="button" onClick={() => void signOut()} className="px-3 py-2.5 text-sm font-medium text-[var(--theme-body)] hover:text-[var(--theme-heading)]">
             Log out
           </button>
         </div>

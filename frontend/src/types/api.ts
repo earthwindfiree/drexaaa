@@ -123,6 +123,24 @@ export interface UserMarketsResponse {
   data: UserMarketAsset[]
 }
 
+export interface MarketHistoryPoint {
+  timestamp: string
+  price: string
+}
+
+export interface MarketHistoryResponse {
+  data: {
+    asset: {
+      id: number
+      symbol: string
+      name: string
+      current_price: string | null
+    }
+    range: '24h' | '7d' | '30d'
+    points: MarketHistoryPoint[]
+  }
+}
+
 export interface PublicStrategyTier {
   id: number
   name: string

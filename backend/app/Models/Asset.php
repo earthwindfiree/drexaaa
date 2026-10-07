@@ -27,6 +27,11 @@ class Asset extends Model
         return $this->hasOne(MarketPrice::class);
     }
 
+    public function marketHistoryPoints(): HasMany
+    {
+        return $this->hasMany(MarketHistoryPoint::class);
+    }
+
     public function deposits(): HasMany
     {
         return $this->hasMany(Deposit::class);

@@ -49,41 +49,41 @@ function PasswordResetPage({ mode }: { mode: PasswordResetMode }) {
 
   return (
     <section className="mx-auto w-full max-w-md px-6 py-12 sm:py-16">
-      <div className="rounded-2xl border border-slate-800 bg-slate-900/80 p-6 shadow-xl shadow-black/20 sm:p-8">
-        <p className="text-xs font-medium uppercase tracking-[0.2em] text-cyan-300">Demo Account · Simulated Performance</p>
-        <h1 className="mt-3 text-3xl font-semibold text-white">{isReset ? 'Set a new password' : 'Reset your password'}</h1>
+      <div className="public-card p-6 shadow-xl shadow-black/20 sm:p-8">
+        <p className="public-kicker inline-flex rounded-full px-3 py-1.5 text-xs font-medium uppercase tracking-[0.2em]">Demo Account · Simulated Performance</p>
+        <h1 className="mt-3 text-3xl font-semibold text-[var(--theme-heading)]">{isReset ? 'Set a new password' : 'Reset your password'}</h1>
         <form onSubmit={(event) => void submit(event)} className="mt-6 space-y-4">
-          <label className="block text-sm font-medium text-slate-200">
+          <label className="block text-sm font-medium text-[var(--theme-body)]">
             Email
             <input type="email" required autoComplete="email" value={email} onChange={(event) => setEmail(event.target.value)} className={inputClassName} />
           </label>
           {isReset && (
             <>
-              <label className="block text-sm font-medium text-slate-200">
+              <label className="block text-sm font-medium text-[var(--theme-body)]">
                 New password
                 <input type="password" required minLength={8} autoComplete="new-password" value={password} onChange={(event) => setPassword(event.target.value)} className={inputClassName} />
               </label>
-              <label className="block text-sm font-medium text-slate-200">
+              <label className="block text-sm font-medium text-[var(--theme-body)]">
                 Confirm new password
                 <input type="password" required minLength={8} autoComplete="new-password" value={passwordConfirmation} onChange={(event) => setPasswordConfirmation(event.target.value)} className={inputClassName} />
               </label>
             </>
           )}
-          {error && <p role="alert" className="text-sm text-rose-300">{error}</p>}
-          {message && <p role="status" className="text-sm text-emerald-300">{message}</p>}
-          <button type="submit" disabled={submitting} className="inline-flex w-full items-center justify-center rounded-lg bg-cyan-400 px-4 py-3 text-sm font-semibold text-slate-950 transition hover:bg-cyan-300 disabled:opacity-60">
+          {error && <p role="alert" className="public-error rounded-lg px-3 py-2.5 text-sm">{error}</p>}
+          {message && <p role="status" className="rounded-lg border border-[rgba(155,211,179,0.24)] bg-[rgba(155,211,179,0.1)] px-3 py-2.5 text-sm text-[var(--theme-success)]">{message}</p>}
+          <button type="submit" disabled={submitting} className="public-primary-action inline-flex w-full items-center justify-center rounded-lg px-4 py-3 text-sm font-semibold transition disabled:opacity-60">
             {submitting ? 'Please wait...' : isReset ? 'Reset password' : 'Send reset link'}
           </button>
         </form>
-        <p className="mt-6 text-center text-sm text-slate-400">
-          <Link to="/login" className="font-medium text-cyan-300 hover:text-cyan-200">Back to login</Link>
+        <p className="mt-6 text-center text-sm text-[var(--theme-muted)]">
+          <Link to="/login" className="font-medium text-[var(--theme-accent)] hover:text-[var(--theme-accent-hover)]">Back to login</Link>
         </p>
       </div>
     </section>
   )
 }
 
-const inputClassName = 'mt-1 block w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2.5 text-sm text-white outline-none transition placeholder:text-slate-500 focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/20'
+const inputClassName = 'mt-1 block w-full rounded-lg border border-[var(--theme-border)] bg-[var(--theme-surface)] px-3 py-2.5 text-sm text-[var(--theme-heading)] outline-none transition placeholder:text-[var(--theme-muted)] focus:border-[var(--theme-focus)] focus:ring-2 focus:ring-[rgba(130,204,197,0.18)]'
 
 function errorMessage(error: unknown, fallback: string): string {
   if (error instanceof ApiError && Object.values(error.errors).length > 0) {

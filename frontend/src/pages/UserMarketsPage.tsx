@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react'
 import { ApiError, apiRequest } from '../lib/api'
 import { useDocumentTitle } from '../hooks/useDocumentTitle'
-import type { UserMarketAsset, UserMarketsResponse } from '../types/api'
+import type { MarketHistoryResponse, UserMarketAsset, UserMarketsResponse } from '../types/api'
+
+type RangeKey = '24h' | '7d' | '30d'
 
 function UserMarketsPage() {
   const [assets, setAssets] = useState<UserMarketAsset[]>([])
@@ -87,6 +89,7 @@ function UserMarketsPage() {
             <AssetMarketList assets={assets} selectedId={selectedAsset.id} onSelect={setSelectedId} />
             <SelectedMarket asset={selectedAsset} />
           </div>
+          <MarketHistoryPanel assetId={selectedAsset.id} symbol={selectedAsset.symbol} name={selectedAsset.name} />
           <MarketDataCoverage />
         </>
       )}
@@ -178,14 +181,116 @@ function SelectedMarket({ asset }: { asset: UserMarketAsset }) {
   )
 }
 
+function MarketHistoryPanel({ assetId, symbol, name }: { assetId: number; symbol: string; name: string }) {
+  const [range, setRange] = useState<RangeKey>('7d')
+  const [history, setHistory] = useState<{
+    requestKey: string
+    points: MarketHistoryResponse['data']['points']
+    error: string | null
+  } | null>(null)
+  const requestKey = `${assetId}:${range}`
+
+  useEffect(() => {
+    let active = true
+
+    void apiRequest<MarketHistoryResponse>(`/api/markets/${assetId}/history?range=${range}`)
+      .then((response) => {
+        if (!active) return
+        setHistory({
+          requestKey,
+          points: Array.isArray(response?.data?.points) ? response.data.points : [],
+          error: null,
+        })
+      })
+      .catch((requestError: unknown) => {
+        if (!active) return
+        let error: string
+        if (requestError instanceof ApiError && requestError.status === 401) {
+          error = 'Your session has expired. Please sign in again.'
+        } else {
+          error = requestError instanceof Error ? requestError.message : 'Unable to load market history.'
+        }
+        setHistory({ requestKey, points: [], error })
+      })
+
+    return () => {
+      active = false
+    }
+  }, [assetId, range, requestKey])
+
+  const currentHistory = history?.requestKey === requestKey ? history : null
+  const loading = currentHistory === null
+  const error = currentHistory?.error ?? null
+  const points = currentHistory && !error ? currentHistory.points : []
+  const chart = buildMarketChart(points)
+
+  return (
+    <article className="market-history-panel dashboard-surface">
+      <div className="market-history-header">
+        <div>
+          <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500">Historical view</p>
+          <h2 className="mt-2 text-base font-medium text-white">{name} ({symbol})</h2>
+        </div>
+        <div className="market-range-toggle" role="group" aria-label="Market history range">
+          {(['24h', '7d', '30d'] as const).map((option) => (
+            <button
+              key={option}
+              type="button"
+              className={option === range ? 'is-active' : ''}
+              aria-pressed={option === range}
+              onClick={() => setRange(option)}
+            >
+              {option}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="market-history-chart" aria-live="polite">
+        {loading && <ChartMessageShell>Loading historical price data…</ChartMessageShell>}
+        {!loading && error && <ChartMessageShell>{error}</ChartMessageShell>}
+        {!loading && !error && points.length === 0 && <ChartMessageShell>No historical points are available for this view.</ChartMessageShell>}
+        {!loading && !error && points.length === 1 && (
+          <ChartMessageShell>
+            {`Only one historical point is available (${formatMarketPrice(points[0]?.price)}). A trend will appear after additional points are recorded.`}
+          </ChartMessageShell>
+        )}
+        {!loading && !error && points.length > 1 && !chart && (
+          <ChartMessageShell>The available historical points cannot be plotted safely.</ChartMessageShell>
+        )}
+        {!loading && !error && points.length > 1 && chart && (
+          <>
+            <svg className="market-history-svg" viewBox="0 0 820 240" preserveAspectRatio="xMidYMid meet" role="img" aria-label={`Simulated ${symbol} price history for the last ${range}`}>
+              <defs>
+                <linearGradient id={`history-fill-${assetId}`} x1="0" x2="0" y1="0" y2="1">
+                  <stop offset="0%" stopColor="#73d6d2" stopOpacity="0.25" />
+                  <stop offset="100%" stopColor="#73d6d2" stopOpacity="0" />
+                </linearGradient>
+              </defs>
+              <path d="M 0 38 H 820 M 0 92 H 820 M 0 146 H 820 M 0 200 H 820" className="chart-grid-line" />
+              <path d={chart.area} fill={`url(#history-fill-${assetId})`} />
+              <path d={chart.line} pathLength="1000" className="performance-line" />
+              <circle cx={chart.last.x} cy={chart.last.y} r="4" className="performance-point" />
+            </svg>
+            <div className="chart-range-labels">
+              <span>{formatChartDate(points[0]?.timestamp)}</span>
+              <span>{formatChartDate(points[points.length - 1]?.timestamp)}</span>
+            </div>
+          </>
+        )}
+      </div>
+    </article>
+  )
+}
+
 function MarketDataCoverage() {
   return (
     <aside className="market-data-note">
       <span className="market-data-note-mark" aria-hidden="true">i</span>
       <div>
-        <p className="text-xs font-medium text-slate-300">Current quotes only</p>
+        <p className="text-xs font-medium text-slate-300">Simulated market history</p>
         <p className="mt-1 text-[11px] leading-5 text-slate-500">
-          The available market feed provides current simulated prices and reported 24-hour changes, not historical price points. No market history chart is shown.
+          This chart is generated from demo market data and preserves the product’s simulated pricing disclaimer.
         </p>
       </div>
     </aside>
@@ -247,6 +352,51 @@ function formatMarketChange(value: unknown): string {
 function movementClass(value: number | null): string {
   if (value === null || value === 0) return 'is-neutral'
   return value > 0 ? 'is-positive' : 'is-negative'
+}
+
+function buildMarketChart(points: MarketHistoryResponse['data']['points']) {
+  if (!Array.isArray(points) || points.length < 2) return null
+
+  const values = points.map((point) => Number(point.price)).filter((value) => Number.isFinite(value))
+  if (values.length < 2) return null
+
+  const minimum = Math.min(...values)
+  const maximum = Math.max(...values)
+  const padding = maximum === minimum ? Math.abs(maximum) * 0.04 || 1 : (maximum - minimum) * 0.16
+  const range = maximum - minimum + padding * 2 || 1
+
+  const coordinates = points.map((point, index) => {
+    const price = Number(point.price)
+    if (!Number.isFinite(price)) return null
+    return {
+      x: 18 + (index / (points.length - 1)) * 784,
+      y: 18 + ((maximum + padding - price) / range) * 182,
+    }
+  }).filter((point): point is { x: number; y: number } => point !== null)
+
+  if (coordinates.length < 2) return null
+
+  const line = coordinates.map((point, index) => `${index === 0 ? 'M' : 'L'} ${point.x.toFixed(2)} ${point.y.toFixed(2)}`).join(' ')
+  const first = coordinates[0]
+  const last = coordinates[coordinates.length - 1]
+  if (!first || !last) return null
+
+  return {
+    line,
+    area: `${line} L ${last.x.toFixed(2)} 212 L ${first.x.toFixed(2)} 212 Z`,
+    last,
+  }
+}
+
+function formatChartDate(value: string | undefined): string {
+  if (!value) return 'N/A'
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return 'N/A'
+  return new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric' }).format(date)
+}
+
+function ChartMessageShell({ children }: { children: string }) {
+  return <div className="chart-message">{children}</div>
 }
 
 export default UserMarketsPage

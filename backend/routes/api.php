@@ -13,6 +13,7 @@ use App\Http\Controllers\Api\Admin\AdminWithdrawalsController;
 use App\Http\Controllers\Api\Admin\DashboardSummaryController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\PublicStrategiesController;
+use App\Http\Controllers\Api\PublicMarketHistoryController;
 use App\Http\Controllers\Api\UserAccountController;
 use App\Http\Controllers\Api\UserDepositsController;
 use App\Http\Controllers\Api\UserMarketsController;
@@ -33,6 +34,8 @@ Route::middleware('api')->get('/health', function () {
 Route::get('/strategies', [PublicStrategiesController::class, 'index']);
 Route::get('/strategies/{strategy}', [PublicStrategiesController::class, 'show'])
     ->whereNumber('strategy');
+Route::get('/markets/{asset}/history', [PublicMarketHistoryController::class, 'show'])
+    ->whereNumber('asset');
 
 Route::prefix('auth')->group(function () {
     Route::get('/countries', [AuthController::class, 'countries']);
