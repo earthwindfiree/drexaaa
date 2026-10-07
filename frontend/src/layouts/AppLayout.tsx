@@ -61,15 +61,15 @@ function AppLayout() {
     : guestNavigation
 
   return (
-    <div className="public-shell flex flex-col text-slate-100">
-      <header className="border-b border-slate-800">
+    <div className="public-shell flex flex-col text-[var(--theme-body)]">
+      <header className="border-b border-[var(--theme-border)] bg-[rgba(10,14,17,0.56)] backdrop-blur-sm">
         <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-4 px-6 py-5 lg:px-8">
-          <Link to="/" className="text-lg font-semibold tracking-tight text-white">
+          <Link to="/" className="text-lg font-semibold tracking-tight text-[var(--theme-heading)]">
             Mercury Managed
           </Link>
-          <nav aria-label="Application navigation" className="flex flex-wrap gap-x-5 gap-y-2 text-sm text-slate-300">
+          <nav aria-label="Application navigation" className="flex flex-wrap gap-x-5 gap-y-2 text-sm text-[var(--theme-body)]">
             {navigation.map((item) => (
-              <Link key={item.to} to={item.to} className="transition hover:text-white">
+              <Link key={item.to} to={item.to} className="transition hover:text-[var(--theme-heading)]">
                 {item.label}
               </Link>
             ))}
@@ -78,7 +78,7 @@ function AppLayout() {
                 type="button"
                 onClick={() => void handleLogout()}
                 disabled={loggingOut}
-                className="text-slate-300 transition hover:text-white disabled:opacity-60"
+                className="text-[var(--theme-body)] transition hover:text-[var(--theme-heading)] disabled:opacity-60"
               >
                 {loggingOut ? 'Signing out…' : 'Log out'}
               </button>
@@ -86,12 +86,17 @@ function AppLayout() {
           </nav>
         </div>
       </header>
-      {logoutError && <p role="alert" className="mx-auto mt-4 w-full max-w-7xl px-6 text-sm text-rose-300">{logoutError}</p>}
+      {logoutError && <p role="alert" className="mx-auto mt-4 w-full max-w-7xl px-6 text-sm text-[var(--theme-danger)]">{logoutError}</p>}
       <main className="flex-1">
         <Outlet />
       </main>
-      <footer className="border-t border-slate-800 px-6 py-5 text-center text-xs text-slate-400">
-        Demo Account · Simulated Performance
+      <footer className="border-t border-[var(--theme-border)] px-6 py-5 text-center text-xs text-[var(--theme-muted)]">
+        <nav aria-label="Legal and contact" className="mb-3 flex flex-wrap justify-center gap-x-5 gap-y-2">
+          <Link to="/contact" className="transition hover:text-[var(--theme-heading)]">Contact</Link>
+          <Link to="/terms" className="transition hover:text-[var(--theme-heading)]">Terms</Link>
+          <Link to="/privacy" className="transition hover:text-[var(--theme-heading)]">Privacy</Link>
+        </nav>
+        <p>Demo Account · Simulated Performance</p>
       </footer>
     </div>
   )

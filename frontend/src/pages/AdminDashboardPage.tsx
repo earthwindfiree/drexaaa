@@ -59,17 +59,17 @@ function AdminDashboardPage() {
     <section className="mx-auto max-w-7xl px-6 py-10 lg:px-8">
       <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
         <div>
-          <p className="text-sm font-semibold uppercase tracking-[0.18em] text-cyan-700">Admin dashboard</p>
-          <h1 className="mt-2 text-3xl font-semibold tracking-tight text-slate-950">Operational summary</h1>
-          <p className="mt-2 max-w-2xl text-sm text-slate-600">A live view of persisted account, funding, and platform configuration data.</p>
+          <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[var(--theme-accent)]">Admin dashboard</p>
+          <h1 className="mt-2 text-3xl font-semibold tracking-tight text-[var(--theme-heading)]">Operational summary</h1>
+          <p className="mt-2 max-w-2xl text-sm text-[var(--theme-muted)]">A live view of persisted account, funding, and platform configuration data.</p>
         </div>
-        <span className="border border-cyan-200 bg-cyan-50 px-3 py-2 text-xs font-semibold uppercase tracking-[0.14em] text-cyan-800">Demo environment</span>
+        <span className="border border-[rgba(129,201,195,0.22)] bg-[rgba(129,201,195,0.08)] px-3 py-2 text-xs font-semibold uppercase tracking-[0.14em] text-[var(--theme-accent)]">Demo environment</span>
       </div>
 
-      {loading && <p className="border border-slate-200 bg-white p-6 text-sm text-slate-600">Loading operational summary...</p>}
+      {loading && <p className="public-card p-6 text-sm text-[var(--theme-body)]">Loading operational summary...</p>}
 
       {!loading && error && (
-        <div role="alert" className="border border-rose-200 bg-rose-50 p-6 text-sm text-rose-800">
+        <div role="alert" className="public-card border border-[rgba(227,155,155,0.22)] bg-[rgba(127,29,29,0.10)] p-6 text-sm text-[var(--theme-heading)]">
           {error}
         </div>
       )}
@@ -92,10 +92,10 @@ function AdminDashboardPage() {
 
 function SummaryCard({ label, value, detail }: { label: string; value: string; detail: string }) {
   return (
-    <article className="border border-slate-200 bg-white p-5 shadow-sm">
-      <p className="text-sm font-medium text-slate-500">{label}</p>
-      <p className="mt-3 text-2xl font-semibold tracking-tight text-slate-950">{value}</p>
-      <p className="mt-2 text-xs text-slate-500">{detail}</p>
+    <article className="public-card p-5">
+      <p className="text-sm font-medium text-[var(--theme-muted)]">{label}</p>
+      <p className="mt-3 text-2xl font-semibold tracking-tight text-[var(--theme-heading)]">{value}</p>
+      <p className="mt-2 text-xs text-[var(--theme-muted)]">{detail}</p>
     </article>
   )
 }

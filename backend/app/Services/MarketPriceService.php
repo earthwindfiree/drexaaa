@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\Asset;
+use App\Models\MarketHistoryPoint;
 use App\Models\MarketPrice;
 use App\Models\User;
 use App\Support\FixedDecimalMath;
@@ -56,6 +57,17 @@ class MarketPriceService
             $marketPrice->current_price = $currentPrice;
             $marketPrice->change_24h_percentage = $change24hPercentage;
             $marketPrice->save();
+
+            $recordedAt = now()->startOfMinute();
+            MarketHistoryPoint::query()->updateOrCreate(
+                [
+                    'asset_id' => $lockedAsset->getKey(),
+                    'recorded_at' => $recordedAt,
+                ],
+                [
+                    'price' => $currentPrice,
+                ],
+            );
             $this->auditLogService->record(
                 $actor,
                 'market_price.updated',

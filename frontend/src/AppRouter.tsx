@@ -30,6 +30,9 @@ import UserNotificationsPage from './pages/UserNotificationsPage'
 import HomePage from './pages/HomePage'
 import NotFoundPage from './pages/NotFoundPage'
 import PublicStrategyDetailsPage from './pages/PublicStrategyDetailsPage'
+import PublicTermsPage from './pages/PublicTermsPage'
+import PublicPrivacyPage from './pages/PublicPrivacyPage'
+import PublicContactPage from './pages/PublicContactPage'
 import RoutePlaceholder from './components/RoutePlaceholder'
 
 const userRoutes = [
@@ -63,6 +66,11 @@ function AppRouter() {
         <Routes>
           <Route path="/" element={<HomePage />} />
           <Route path="/strategies/:strategyId" element={<PublicStrategyDetailsPage />} />
+          <Route element={<AppLayout />}>
+            <Route path="/terms" element={<PublicTermsPage />} />
+            <Route path="/privacy" element={<PublicPrivacyPage />} />
+            <Route path="/contact" element={<PublicContactPage />} />
+          </Route>
           <Route element={<GuestRoute />}>
             <Route element={<AppLayout />}>
               <Route path="/login" element={<AuthPage mode="login" />} />

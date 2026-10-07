@@ -6,16 +6,16 @@
 .public-shell {
   min-height: 100vh;
   background:
-    radial-gradient(ellipse at 78% 0%, rgba(40, 116, 126, 0.12), transparent 33%),
-    linear-gradient(130deg, #0b1013 0%, #090d10 52%, #0c1114 100%);
+    radial-gradient(ellipse at 78% 0%, rgba(129, 201, 195, 0.12), transparent 33%),
+    linear-gradient(130deg, var(--theme-background) 0%, var(--theme-background-deep) 52%, #0c1114 100%);
 }
 
 .public-shell .border-slate-800 {
-  border-color: rgba(220, 239, 238, 0.085);
+  border-color: var(--theme-border);
 }
 
 .public-shell .bg-slate-950 {
-  background-color: #0b1013;
+  background-color: var(--theme-background);
 }
 
 .public-shell .bg-slate-950\/80 {
@@ -23,7 +23,7 @@
 }
 
 .public-shell .bg-slate-900 {
-  background-color: #111719;
+  background-color: var(--theme-surface);
 }
 
 .public-shell .bg-slate-900\/70 {
@@ -36,18 +36,240 @@
 
 .public-hero-light {
   background:
-    radial-gradient(ellipse at 76% 0%, rgba(40, 116, 126, 0.14), transparent 31%),
-    radial-gradient(ellipse at 24% 48%, rgba(26, 72, 79, 0.08), transparent 38%);
+    radial-gradient(ellipse at 76% 0%, rgba(129, 201, 195, 0.14), transparent 31%),
+    radial-gradient(ellipse at 24% 48%, rgba(129, 201, 195, 0.08), transparent 38%);
+}
+
+.public-brand-mark {
+  display: flex;
+  width: 2.5rem;
+  height: 2.5rem;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.75rem;
+  border: 1px solid rgba(129, 201, 195, 0.32);
+  background: rgba(129, 201, 195, 0.12);
+  color: var(--theme-accent);
+  font-size: 1.125rem;
+  font-weight: 700;
+}
+
+.public-kicker {
+  border: 1px solid rgba(129, 201, 195, 0.3);
+  background: rgba(129, 201, 195, 0.1);
+  color: var(--theme-accent);
+}
+
+.public-secondary-action {
+  border: 1px solid var(--theme-border);
+  background: rgba(15, 23, 30, 0.45);
+  color: var(--theme-heading);
+}
+
+.public-secondary-action:hover {
+  border-color: rgba(129, 201, 195, 0.3);
+  background: rgba(17, 24, 29, 0.8);
 }
 
 .public-primary-action {
   border: 1px solid rgba(148, 213, 207, 0.2);
-  background: #81c9c3;
+  background: var(--theme-accent);
   color: #091112;
 }
 
 .public-primary-action:hover {
-  background: #9ad8d2;
+  background: var(--theme-accent-hover);
+}
+
+.public-card,
+.public-info-card {
+  border: 1px solid var(--theme-border);
+  background: linear-gradient(145deg, rgba(24, 31, 34, 0.92), rgba(16, 21, 24, 0.97));
+  box-shadow: 0 16px 42px rgba(0, 0, 0, 0.14);
+}
+
+.public-card {
+  border-radius: 1.25rem;
+}
+
+.public-info-card {
+  border-radius: 1.5rem;
+}
+
+.public-surface {
+  border: 1px solid var(--theme-border);
+  background: linear-gradient(140deg, rgba(19, 25, 28, 0.94), rgba(10, 14, 17, 0.96));
+}
+
+.public-muted {
+  color: var(--theme-muted);
+}
+
+.public-divider {
+  border-color: var(--theme-border);
+}
+
+.public-error {
+  border: 1px solid rgba(227, 155, 155, 0.24);
+  background: rgba(127, 29, 29, 0.12);
+  color: var(--theme-danger);
+}
+
+.admin-shell {
+  min-height: 100vh;
+  background:
+    radial-gradient(ellipse at 78% 0%, rgba(40, 116, 126, 0.12), transparent 33%),
+    linear-gradient(130deg, var(--theme-background) 0%, var(--theme-background-deep) 52%, #0c1114 100%);
+  color: var(--theme-body);
+}
+
+.admin-shell .bg-white,
+.admin-shell .bg-slate-50,
+.admin-shell .bg-slate-100 {
+  background: linear-gradient(145deg, rgba(24, 31, 34, 0.92), rgba(16, 21, 24, 0.97));
+}
+
+.admin-shell .bg-slate-200 {
+  background: rgba(220, 239, 238, 0.08);
+}
+
+.admin-shell .border-slate-100,
+.admin-shell .border-slate-200,
+.admin-shell .border-slate-300,
+.admin-shell .divide-slate-100 > :not([hidden]) ~ :not([hidden]) {
+  border-color: var(--theme-border);
+}
+
+.admin-shell .text-slate-950,
+.admin-shell .text-slate-900 {
+  color: var(--theme-heading);
+}
+
+.admin-shell .text-slate-800,
+.admin-shell .text-slate-700,
+.admin-shell .text-slate-600 {
+  color: var(--theme-body);
+}
+
+.admin-shell .text-slate-500,
+.admin-shell .text-slate-400 {
+  color: var(--theme-muted);
+}
+
+.admin-shell .border-slate-300 {
+  border-color: rgba(220, 239, 238, 0.16);
+}
+
+.admin-shell .text-cyan-700,
+.admin-shell .text-cyan-800,
+.admin-shell .text-cyan-900 {
+  color: var(--theme-accent);
+}
+
+.admin-shell .border-cyan-200 {
+  border-color: rgba(129, 201, 195, 0.22);
+}
+
+.admin-shell .bg-cyan-50 {
+  background: rgba(129, 201, 195, 0.08);
+}
+
+.admin-shell .text-rose-800,
+.admin-shell .text-rose-700 {
+  color: var(--theme-danger);
+}
+
+.admin-shell .border-rose-200 {
+  border-color: rgba(227, 155, 155, 0.22);
+}
+
+.admin-shell .bg-rose-50 {
+  background: rgba(127, 29, 29, 0.12);
+}
+
+.admin-shell .text-amber-700 {
+  color: var(--theme-warning);
+}
+
+.admin-shell .bg-amber-50 {
+  background: rgba(216, 191, 145, 0.12);
+}
+
+.admin-shell .text-amber-800 {
+  color: var(--theme-warning);
+}
+
+.admin-shell .text-emerald-800,
+.admin-shell .text-emerald-700 {
+  color: var(--theme-success);
+}
+
+.admin-shell .border-emerald-200 {
+  border-color: rgba(155, 211, 179, 0.22);
+}
+
+.admin-shell .bg-emerald-50 {
+  background: rgba(155, 211, 179, 0.1);
+}
+
+.admin-shell .border-rose-300 {
+  border-color: rgba(227, 155, 155, 0.28);
+}
+
+.admin-shell input,
+.admin-shell select,
+.admin-shell textarea {
+  border-color: rgba(220, 239, 238, 0.14);
+  background-color: rgba(10, 14, 17, 0.78);
+  color: var(--theme-heading);
+}
+
+.admin-shell input::placeholder,
+.admin-shell textarea::placeholder {
+  color: var(--theme-muted);
+}
+
+.admin-shell input:focus,
+.admin-shell select:focus,
+.admin-shell textarea:focus {
+  border-color: var(--theme-focus);
+}
+
+.admin-shell input:focus-visible,
+.admin-shell select:focus-visible,
+.admin-shell textarea:focus-visible,
+.admin-shell button:focus-visible,
+.admin-shell a:focus-visible {
+  outline: 2px solid var(--theme-focus);
+  outline-offset: 2px;
+}
+
+.admin-shell button.bg-slate-950 {
+  background: var(--theme-accent);
+  color: var(--theme-background);
+}
+
+.admin-shell button.bg-slate-950:hover {
+  background: var(--theme-accent-hover);
+}
+
+.admin-shell button.bg-cyan-700 {
+  background: var(--theme-accent);
+  color: var(--theme-background);
+}
+
+.admin-shell button.bg-cyan-700:hover {
+  background: var(--theme-accent-hover);
+}
+
+.admin-shell button.border-slate-300 {
+  background: rgba(255, 255, 255, 0.025);
+  color: var(--theme-body);
+}
+
+.admin-shell button.border-slate-300:hover {
+  border-color: rgba(129, 201, 195, 0.3);
+  color: var(--theme-heading);
 }
 
 .card-glow {
@@ -793,6 +1015,69 @@
   font-size: 11px;
   line-height: 1.7;
   text-align: center;
+}
+
+.market-history-panel {
+  min-width: 0;
+  padding: 22px;
+}
+
+.market-history-header {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+  padding-bottom: 16px;
+}
+
+.market-range-toggle {
+  display: inline-flex;
+  flex: 0 0 auto;
+  gap: 3px;
+  border: 1px solid rgba(255, 255, 255, 0.085);
+  background: rgba(8, 13, 15, 0.45);
+  padding: 3px;
+}
+
+.market-range-toggle button {
+  min-width: 43px;
+  border: 1px solid transparent;
+  padding: 6px 8px;
+  color: #829093;
+  font-size: 10px;
+  transition: background-color 160ms ease, border-color 160ms ease, color 160ms ease;
+}
+
+.market-range-toggle button:hover {
+  color: #d6e2e1;
+}
+
+.market-range-toggle button:focus-visible {
+  outline: 2px solid #82ccc5;
+  outline-offset: 2px;
+}
+
+.market-range-toggle button.is-active {
+  border-color: rgba(129, 201, 195, 0.16);
+  background: rgba(129, 201, 195, 0.1);
+  color: #b8ded9;
+}
+
+.market-history-chart {
+  width: 100%;
+  min-width: 0;
+  overflow: hidden;
+  padding-top: 12px;
+}
+
+.market-history-svg {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  height: auto;
+  aspect-ratio: 820 / 240;
 }
 
 .chart-legend-mark {
@@ -2645,6 +2930,20 @@
   .selected-market {
     min-height: 320px;
     padding: 20px;
+  }
+
+  .market-history-panel {
+    padding: 18px 16px;
+  }
+
+  .market-history-header {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 13px;
+  }
+
+  .market-range-toggle {
+    max-width: 100%;
   }
 
   .managed-content > section > :first-child {

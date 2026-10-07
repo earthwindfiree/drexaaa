@@ -37,22 +37,22 @@ function AdminLayout() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-100 text-slate-950">
-      <header className="border-b border-slate-200 bg-white">
+    <div className="admin-shell min-h-screen text-[var(--theme-body)]">
+      <header className="border-b border-[var(--theme-border)] bg-[rgba(10,14,17,0.7)] backdrop-blur-sm">
         <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-4 px-6 py-5 lg:px-8">
           <div>
-            <Link to="/" className="text-lg font-semibold tracking-tight text-slate-950">
+            <Link to="/" className="text-lg font-semibold tracking-tight text-[var(--theme-heading)]">
               Mercury Managed
             </Link>
-            <p className="mt-1 text-xs font-medium uppercase tracking-[0.18em] text-cyan-700">Operations console</p>
+            <p className="mt-1 text-xs font-medium uppercase tracking-[0.18em] text-[var(--theme-accent)]">Operations console</p>
           </div>
-          <nav aria-label="Admin navigation" className="flex flex-wrap items-center gap-x-5 gap-y-2 text-sm text-slate-600">
+          <nav aria-label="Admin navigation" className="flex flex-wrap items-center gap-x-5 gap-y-2 text-sm text-[var(--theme-body)]">
             {adminNavigation.map((item) => (
               <NavLink
                 key={item.to}
                 to={item.to}
                 end={item.to === '/admin'}
-                className={({ isActive }) => isActive ? 'font-semibold text-cyan-700' : 'transition hover:text-slate-950'}
+                className={({ isActive }) => isActive ? 'font-semibold text-[var(--theme-accent)]' : 'transition hover:text-[var(--theme-heading)]'}
               >
                 {item.label}
               </NavLink>
@@ -61,14 +61,14 @@ function AdminLayout() {
               type="button"
               onClick={() => void handleLogout()}
               disabled={loggingOut}
-              className="font-medium text-slate-600 transition hover:text-slate-950 disabled:opacity-60"
+              className="font-medium text-[var(--theme-body)] transition hover:text-[var(--theme-heading)] disabled:opacity-60"
             >
               {loggingOut ? 'Signing out...' : 'Log out'}
             </button>
           </nav>
         </div>
       </header>
-      {logoutError && <p role="alert" className="mx-auto mt-4 w-full max-w-7xl px-6 text-sm text-rose-700">{logoutError}</p>}
+      {logoutError && <p role="alert" className="mx-auto mt-4 w-full max-w-7xl px-6 text-sm text-[var(--theme-danger)]">{logoutError}</p>}
       <main>
         <Outlet />
       </main>

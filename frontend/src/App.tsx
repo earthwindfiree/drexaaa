@@ -81,28 +81,26 @@ function LandingPage() {
   }, [strategyRefresh])
 
   return (
-    <div className="public-shell text-slate-100">
+    <div className="public-shell text-[var(--theme-heading)]">
       <header className="mx-auto flex max-w-7xl items-center justify-between px-6 py-6 lg:px-8">
         <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-cyan-500/15 text-lg font-bold text-cyan-300 ring-1 ring-cyan-400/30">
-            M
-          </div>
+          <div className="public-brand-mark">M</div>
           <div>
-            <div className="text-lg font-semibold tracking-tight">Mercury Managed</div>
-            <div className="text-[10px] uppercase tracking-[0.24em] text-slate-400">Demo Platform</div>
+            <div className="text-lg font-semibold tracking-tight text-[var(--theme-heading)]">Mercury Managed</div>
+            <div className="text-[10px] uppercase tracking-[0.24em] text-[var(--theme-muted)]">Demo Platform</div>
           </div>
         </div>
 
-        <nav className="hidden items-center gap-7 text-sm text-slate-300 md:flex">
+        <nav className="hidden items-center gap-7 text-sm text-[var(--theme-body)] md:flex">
           {navItems.map((item) => (
-            <Link key={item.label} to={item.href} className="transition hover:text-white">
-              {item.label}
-            </Link>
+            item.href.startsWith('#')
+              ? <a key={item.label} href={item.href} className="transition hover:text-[var(--theme-heading)]">{item.label}</a>
+              : <Link key={item.label} to={item.href} className="transition hover:text-[var(--theme-heading)]">{item.label}</Link>
           ))}
         </nav>
 
         <div className="flex items-center gap-3">
-          <Link to="/login" className="hidden rounded-full border border-slate-700 px-4 py-2 text-sm text-slate-200 transition hover:border-slate-500 hover:text-white sm:inline-flex">
+          <Link to="/login" className="public-secondary-action hidden rounded-full px-4 py-2 text-sm transition sm:inline-flex">
             Login
           </Link>
           <Link to="/register" className="public-primary-action inline-flex rounded-full px-4 py-2 text-sm font-medium transition">
@@ -116,13 +114,13 @@ function LandingPage() {
           <div className="public-hero-light absolute inset-0" />
           <div className="relative mx-auto grid max-w-7xl gap-12 px-6 pb-20 pt-10 lg:grid-cols-[1.1fr_0.9fr] lg:px-8 lg:pb-28 lg:pt-16">
             <div className="max-w-xl">
-              <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-cyan-500/30 bg-cyan-500/10 px-3 py-1.5 text-xs font-medium uppercase tracking-[0.18em] text-cyan-200">
+              <div className="public-kicker mb-6 inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-xs font-medium uppercase tracking-[0.18em]">
                 Demo Account · Simulated Performance
               </div>
-              <h1 className="text-4xl font-semibold tracking-[-0.06em] text-white sm:text-5xl lg:text-6xl">
+              <h1 className="text-4xl font-semibold tracking-[-0.06em] text-[var(--theme-heading)] sm:text-5xl lg:text-6xl">
                 Managed crypto exposure with clear visibility and controlled demo performance.
               </h1>
-              <p className="mt-6 max-w-lg text-base text-slate-300 sm:text-lg">
+              <p className="mt-6 max-w-lg text-base text-[var(--theme-body)] sm:text-lg">
                 A polished managed-trading presentation platform for account monitoring, tier qualification, simulated market insights, and secure account management.
               </p>
 
@@ -130,23 +128,23 @@ function LandingPage() {
                 <Link to="/register" className="public-primary-action inline-flex items-center justify-center rounded-full px-6 py-3.5 text-sm font-semibold transition">
                   Get Started
                 </Link>
-                <a href="#strategies" className="inline-flex items-center justify-center rounded-full border border-slate-700 px-6 py-3.5 text-sm font-semibold text-slate-100 transition hover:border-slate-500 hover:bg-slate-900">
+                <a href="#strategies" className="public-secondary-action inline-flex items-center justify-center rounded-full px-6 py-3.5 text-sm font-semibold transition">
                   Explore Strategies
                 </a>
               </div>
 
               <div className="mt-10 grid max-w-md grid-cols-3 gap-4 text-left">
                 <div>
-                  <div className="text-2xl font-semibold text-white">$12.4M</div>
-                  <div className="mt-1 text-xs uppercase tracking-[0.18em] text-slate-400">Demo Volume</div>
+                  <div className="text-2xl font-semibold text-[var(--theme-heading)]">$12.4M</div>
+                  <div className="mt-1 text-xs uppercase tracking-[0.18em] text-[var(--theme-muted)]">Demo Volume</div>
                 </div>
                 <div>
-                  <div className="text-2xl font-semibold text-white">4</div>
-                  <div className="mt-1 text-xs uppercase tracking-[0.18em] text-slate-400">Tiers</div>
+                  <div className="text-2xl font-semibold text-[var(--theme-heading)]">4</div>
+                  <div className="mt-1 text-xs uppercase tracking-[0.18em] text-[var(--theme-muted)]">Tiers</div>
                 </div>
                 <div>
-                  <div className="text-2xl font-semibold text-white">5</div>
-                  <div className="mt-1 text-xs uppercase tracking-[0.18em] text-slate-400">Assets</div>
+                  <div className="text-2xl font-semibold text-[var(--theme-heading)]">5</div>
+                  <div className="mt-1 text-xs uppercase tracking-[0.18em] text-[var(--theme-muted)]">Assets</div>
                 </div>
               </div>
             </div>
@@ -192,7 +190,7 @@ function LandingPage() {
           </div>
         </section>
 
-        <section id="how-it-works" className="mx-auto max-w-7xl px-6 py-12 lg:px-8">
+        <section className="mx-auto max-w-7xl px-6 py-12 lg:px-8">
           <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-4">
             {highlights.map((item) => (
               <article key={item.title} className="rounded-2xl border border-slate-800 bg-slate-900/70 p-5 transition hover:border-slate-700 hover:bg-slate-900">
@@ -232,17 +230,19 @@ function LandingPage() {
 
         <section id="strategies" className="mx-auto max-w-7xl px-6 py-12 lg:px-8">
           <div className="mb-10">
-            <p className="text-xs uppercase tracking-[0.22em] text-cyan-300">Strategies</p>
-            <h2 className="mt-3 text-3xl font-semibold text-white">Tiered profiles built for different account sizes.</h2>
+            <p className="public-kicker mb-3 inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-xs font-medium uppercase tracking-[0.2em]">
+              Strategies
+            </p>
+            <h2 className="mt-3 text-3xl font-semibold text-[var(--theme-heading)]">Tiered profiles built for different account sizes.</h2>
           </div>
 
           {strategiesLoading && (
             <div className="grid gap-6 lg:grid-cols-2 xl:grid-cols-4" role="status" aria-label="Loading strategies">
               {[0, 1, 2, 3].map((item) => (
-                <div key={item} className="animate-pulse rounded-2xl border border-slate-800 bg-slate-900/70 p-5">
-                  <div className="h-4 w-28 rounded bg-slate-700" />
-                  <div className="mt-5 h-7 w-32 rounded bg-slate-700" />
-                  <div className="mt-5 h-16 rounded bg-slate-800" />
+                <div key={item} className="public-card animate-pulse p-5">
+                  <div className="h-4 w-28 rounded bg-[var(--theme-surface)]" />
+                  <div className="mt-5 h-7 w-32 rounded bg-[var(--theme-surface)]" />
+                  <div className="mt-5 h-16 rounded bg-[var(--theme-surface)]" />
                 </div>
               ))}
               <span className="sr-only">Loading strategy information...</span>
@@ -250,7 +250,7 @@ function LandingPage() {
           )}
 
           {!strategiesLoading && strategiesError && (
-            <div role="alert" className="rounded-2xl border border-rose-400/20 bg-rose-950/30 p-5 text-sm text-rose-100">
+            <div role="alert" className="public-card border border-[rgba(227,155,155,0.25)] bg-[rgba(127,29,29,0.10)] p-5 text-sm text-[var(--theme-heading)]">
               <p>{strategiesError}</p>
               <button
                 type="button"
@@ -259,7 +259,7 @@ function LandingPage() {
                   setStrategiesLoading(true)
                   setStrategyRefresh((current) => current + 1)
                 }}
-                className="mt-3 rounded-full border border-rose-200/30 px-4 py-2 font-medium transition hover:bg-rose-50/10"
+                className="mt-3 rounded-full border border-[rgba(227,155,155,0.28)] px-4 py-2 font-medium text-[var(--theme-heading)] transition hover:bg-[rgba(227,155,155,0.08)]"
               >
                 Try again
               </button>
@@ -267,70 +267,70 @@ function LandingPage() {
           )}
 
           {!strategiesLoading && !strategiesError && strategies.length === 0 && (
-            <p className="rounded-2xl border border-slate-800 bg-slate-900/70 p-5 text-sm text-slate-300">
+            <p className="public-card p-5 text-sm text-[var(--theme-body)]">
               No strategy profiles are currently available.
             </p>
           )}
 
           {!strategiesLoading && !strategiesError && strategies.length > 0 && (
-          <div className="grid gap-6 lg:grid-cols-2 xl:grid-cols-4">
-            {strategies.map((strategy) => (
-              <article key={strategy.id} className="rounded-2xl border border-slate-800 bg-slate-900/70 p-5 transition hover:-translate-y-1 hover:border-cyan-500/30">
-                <div className="text-sm uppercase tracking-[0.2em] text-cyan-300">{strategy.name}</div>
-                <div className="mt-4 text-2xl font-semibold text-white">{formatMinimum(strategy.tiers[0]?.minimum_balance)}</div>
-                <p className="mt-3 text-sm text-slate-300">{strategy.description}</p>
-                <p className="mt-4 text-sm leading-6 text-slate-400">{strategy.risk_profile} profile</p>
-                <Link to={`/strategies/${strategy.id}`} className="mt-5 inline-flex rounded-full border border-slate-700 px-4 py-2 text-sm text-slate-100 transition hover:border-slate-500 hover:bg-slate-800">
-                  View Details
-                </Link>
-              </article>
-            ))}
-          </div>
+            <div className="grid gap-6 lg:grid-cols-2 xl:grid-cols-4">
+              {strategies.map((strategy) => (
+                <article key={strategy.id} className="public-card p-5 transition hover:-translate-y-1 hover:border-[rgba(129,201,195,0.3)]">
+                  <div className="text-sm uppercase tracking-[0.2em] text-[var(--theme-accent)]">{strategy.name}</div>
+                  <div className="mt-4 text-2xl font-semibold text-[var(--theme-heading)]">{formatMinimum(strategy.tiers[0]?.minimum_balance)}</div>
+                  <p className="mt-3 text-sm text-[var(--theme-body)]">{strategy.description}</p>
+                  <p className="mt-4 text-sm leading-6 text-[var(--theme-muted)]">{strategy.risk_profile} profile</p>
+                  <Link to={`/strategies/${strategy.id}`} className="mt-5 inline-flex rounded-full border border-[var(--theme-border)] px-4 py-2 text-sm text-[var(--theme-heading)] transition hover:border-[rgba(129,201,195,0.25)] hover:bg-[rgba(129,201,195,0.05)]">
+                    View Details
+                  </Link>
+                </article>
+              ))}
+            </div>
           )}
         </section>
 
         <section id="markets" className="mx-auto max-w-7xl px-6 py-12 lg:px-8">
           <div className="mb-10">
-            <p className="text-xs uppercase tracking-[0.22em] text-cyan-300">Markets</p>
-            <h2 className="mt-3 text-3xl font-semibold text-white">Simulated market overview.</h2>
+            <p className="public-kicker mb-3 inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-xs font-medium uppercase tracking-[0.22em]">Markets</p>
+            <h2 className="mt-3 text-3xl font-semibold text-[var(--theme-heading)]">Simulated market overview.</h2>
           </div>
 
           <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
             {markets.map((market) => (
-              <div key={market.symbol} className="rounded-2xl border border-slate-800 bg-slate-900/70 p-5">
+              <div key={market.symbol} className="public-card p-5">
                 <div className="flex items-center justify-between">
                   <div>
-                    <div className="text-lg font-semibold text-white">{market.symbol}</div>
-                    <div className="text-xs uppercase tracking-[0.18em] text-slate-400">{market.name}</div>
+                    <div className="text-lg font-semibold text-[var(--theme-heading)]">{market.symbol}</div>
+                    <div className="text-xs uppercase tracking-[0.18em] text-[var(--theme-muted)]">{market.name}</div>
                   </div>
-                  <span className="rounded-full bg-emerald-500/10 px-2 py-1 text-xs font-medium text-emerald-300">{market.change}</span>
+                  <span className="rounded-full bg-[rgba(155,211,179,0.10)] px-2 py-1 text-xs font-medium text-[var(--theme-success)]">{market.change}</span>
                 </div>
-                <div className="mt-6 text-3xl font-semibold text-white">{market.price}</div>
-                <div className="mt-5 h-20 rounded-xl bg-gradient-to-r from-slate-800 via-slate-700 to-cyan-500/20" />
+                <div className="mt-6 text-3xl font-semibold text-[var(--theme-heading)]">{market.price}</div>
+                <div className="mt-5 h-20 rounded-xl bg-gradient-to-r from-[rgba(24,31,34,0.95)] via-[rgba(18,25,28,0.92)] to-[rgba(129,201,195,0.18)]" />
               </div>
             ))}
           </div>
         </section>
 
         <section className="mx-auto max-w-7xl px-6 py-12 lg:px-8">
-          <div className="rounded-[2rem] border border-slate-800 bg-slate-900/70 p-8 sm:p-10">
+          <div className="public-card p-8 sm:p-10">
             <div className="grid gap-10 lg:grid-cols-[1fr_0.9fr] lg:items-center">
               <div>
-                <p className="text-xs uppercase tracking-[0.22em] text-cyan-300">Performance</p>
-                <h2 className="mt-3 text-3xl font-semibold text-white">Clear, simulated growth tracking.</h2>
-                <p className="mt-4 max-w-xl text-slate-300">
+                <p className="public-kicker inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-xs font-medium uppercase tracking-[0.22em]">Performance</p>
+                <h2 className="mt-3 text-3xl font-semibold text-[var(--theme-heading)]">Clear, simulated growth tracking.</h2>
+                <p className="mt-4 max-w-xl text-[var(--theme-body)]">
                   This presentation emphasizes account-level performance visibility without implying live or guaranteed returns. All values are demo-only and clearly labeled.
                 </p>
               </div>
 
-              <div className="rounded-2xl border border-slate-800 bg-slate-950 p-5">
-                <div className="flex items-center justify-between text-sm text-slate-400">
+              <div className="public-surface rounded-2xl p-5">
+                <div className="flex items-center justify-between text-sm text-[var(--theme-muted)]">
                   <span>Demo Account</span>
-                  <span className="text-emerald-300">+12.8%</span>
+                  <span className="text-[var(--theme-success)]">+12.8%</span>
                 </div>
                 <div className="mt-5 flex items-end gap-2">
                   {[20, 32, 40, 54, 72, 88, 101].map((height) => (
-                    <div key={height} className="flex-1 rounded-t-xl bg-gradient-to-t from-emerald-500/70 to-cyan-400" style={{ height: `${height}px` }} />
+                    <div key={height} className="flex-1 rounded-t-xl bg-gradient-to-t from-[rgba(155,211,179,0.75)] to-[var(--theme-accent)]" style={{ height: `${height}px` }} />
                   ))}
                 </div>
               </div>
@@ -340,15 +340,15 @@ function LandingPage() {
 
         <section className="mx-auto max-w-7xl px-6 py-12 lg:px-8">
           <div className="mb-10">
-            <p className="text-xs uppercase tracking-[0.22em] text-cyan-300">Testimonials</p>
-            <h2 className="mt-3 text-3xl font-semibold text-white">Demo-ready social proof for presentation use.</h2>
+            <p className="public-kicker mb-3 inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-xs font-medium uppercase tracking-[0.22em]">Testimonials</p>
+            <h2 className="mt-3 text-3xl font-semibold text-[var(--theme-heading)]">Demo-ready social proof for presentation use.</h2>
           </div>
 
           <div className="grid gap-6 md:grid-cols-2">
             {testimonials.map((item) => (
-              <blockquote key={item.author} className="rounded-2xl border border-slate-800 bg-slate-900/70 p-6">
-                <p className="text-lg leading-8 text-slate-200">“{item.quote}”</p>
-                <footer className="mt-5 text-sm uppercase tracking-[0.18em] text-slate-400">{item.author}</footer>
+              <blockquote key={item.author} className="public-card p-6">
+                <p className="text-lg leading-8 text-[var(--theme-body)]">“{item.quote}”</p>
+                <footer className="mt-5 text-sm uppercase tracking-[0.18em] text-[var(--theme-muted)]">{item.author}</footer>
               </blockquote>
             ))}
           </div>
@@ -356,24 +356,24 @@ function LandingPage() {
 
         <section id="faq" className="mx-auto max-w-7xl px-6 py-12 lg:px-8">
           <div className="mb-10">
-            <p className="text-xs uppercase tracking-[0.22em] text-cyan-300">FAQ</p>
-            <h2 className="mt-3 text-3xl font-semibold text-white">Frequently asked questions.</h2>
+            <p className="public-kicker mb-3 inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-xs font-medium uppercase tracking-[0.22em]">FAQ</p>
+            <h2 className="mt-3 text-3xl font-semibold text-[var(--theme-heading)]">Frequently asked questions.</h2>
           </div>
 
           <div className="space-y-4">
             {faqs.map((faq) => (
-              <div key={faq.question} className="rounded-2xl border border-slate-800 bg-slate-900/70 p-5">
-                <h3 className="text-lg font-semibold text-white">{faq.question}</h3>
-                <p className="mt-2 text-sm leading-6 text-slate-400">{faq.answer}</p>
+              <div key={faq.question} className="public-card p-5">
+                <h3 className="text-lg font-semibold text-[var(--theme-heading)]">{faq.question}</h3>
+                <p className="mt-2 text-sm leading-6 text-[var(--theme-muted)]">{faq.answer}</p>
               </div>
             ))}
           </div>
         </section>
 
         <section className="mx-auto max-w-7xl px-6 pb-20 pt-12 lg:px-8">
-          <div className="rounded-[2rem] border border-cyan-500/30 bg-cyan-500/10 p-8 text-center sm:p-12">
-            <p className="text-xs uppercase tracking-[0.22em] text-cyan-200">Ready to begin</p>
-            <h2 className="mt-3 text-3xl font-semibold text-white sm:text-4xl">Build a premium managed-trading presentation without real trading risk.</h2>
+          <div className="public-info-card border-[rgba(129,201,195,0.24)] bg-[rgba(129,201,195,0.08)] p-8 text-center sm:p-12">
+            <p className="text-xs uppercase tracking-[0.22em] text-[var(--theme-accent)]">Ready to begin</p>
+            <h2 className="mt-3 text-3xl font-semibold text-[var(--theme-heading)] sm:text-4xl">Build a premium managed-trading presentation without real trading risk.</h2>
             <div className="mt-6 flex justify-center">
               <Link to="/register" className="public-primary-action inline-flex rounded-full px-6 py-3.5 text-sm font-semibold transition">
                 Get Started
@@ -383,43 +383,47 @@ function LandingPage() {
         </section>
       </main>
 
-      <footer className="border-t border-slate-800 bg-slate-950/80">
-        <div className="mx-auto grid max-w-7xl gap-10 px-6 py-12 text-sm text-slate-400 md:grid-cols-5 lg:px-8">
+      <footer className="border-t border-[var(--theme-border)] bg-[rgba(10,14,17,0.78)]">
+        <div className="mx-auto grid max-w-7xl gap-10 px-6 py-12 text-sm text-[var(--theme-muted)] md:grid-cols-5 lg:px-8">
           <div className="md:col-span-2">
             <div className="flex items-center gap-3">
-              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-cyan-500/15 text-cyan-300 ring-1 ring-cyan-400/30">M</div>
-              <div className="font-semibold text-white">Mercury Managed</div>
+              <div className="public-brand-mark h-9 w-9 text-sm">M</div>
+              <div className="font-semibold text-[var(--theme-heading)]">Mercury Managed</div>
             </div>
-            <p className="mt-4 max-w-sm leading-6 text-slate-400">
+            <p className="mt-4 max-w-sm leading-6 text-[var(--theme-muted)]">
               Demo-managed crypto presentation platform built to showcase secure account flows, tiered strategies, and simulated market activity.
             </p>
           </div>
 
           <div>
-            <div className="font-semibold uppercase tracking-[0.18em] text-slate-300">Navigation</div>
+            <div className="font-semibold uppercase tracking-[0.18em] text-[var(--theme-body)]">Navigation</div>
             <ul className="mt-4 space-y-2">
               {navItems.map((item) => (
-                <li key={item.label}><Link to={item.href} className="hover:text-white">{item.label}</Link></li>
+                <li key={item.label}>
+                  {item.href.startsWith('#')
+                    ? <a href={item.href} className="hover:text-[var(--theme-heading)]">{item.label}</a>
+                    : <Link to={item.href} className="hover:text-[var(--theme-heading)]">{item.label}</Link>}
+                </li>
               ))}
             </ul>
           </div>
 
           <div>
-            <div className="font-semibold uppercase tracking-[0.18em] text-slate-300">Strategies</div>
+            <div className="font-semibold uppercase tracking-[0.18em] text-[var(--theme-body)]">Strategies</div>
             <ul className="mt-4 space-y-2">
               {strategies.map((strategy) => (
-                <li key={strategy.id}><Link to={`/strategies/${strategy.id}`} className="hover:text-white">{strategy.name}</Link></li>
+                <li key={strategy.id}><Link to={`/strategies/${strategy.id}`} className="hover:text-[var(--theme-heading)]">{strategy.name}</Link></li>
               ))}
             </ul>
           </div>
 
           <div>
-            <div className="font-semibold uppercase tracking-[0.18em] text-slate-300">Legal</div>
+            <div className="font-semibold uppercase tracking-[0.18em] text-[var(--theme-body)]">Legal</div>
             <ul className="mt-4 space-y-2">
-              <li><a href="#" className="hover:text-white">Contact</a></li>
-              <li><a href="#" className="hover:text-white">Terms</a></li>
-              <li><a href="#" className="hover:text-white">Privacy</a></li>
-              <li className="mt-3 text-[11px] uppercase tracking-[0.18em] text-cyan-200">Demo Disclosure</li>
+              <li><Link to="/contact" className="hover:text-[var(--theme-heading)]">Contact</Link></li>
+              <li><Link to="/terms" className="hover:text-[var(--theme-heading)]">Terms</Link></li>
+              <li><Link to="/privacy" className="hover:text-[var(--theme-heading)]">Privacy</Link></li>
+              <li className="mt-3 text-[11px] uppercase tracking-[0.18em] text-[var(--theme-accent)]">Demo Disclosure</li>
             </ul>
           </div>
         </div>
