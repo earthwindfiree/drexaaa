@@ -1,8 +1,11 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import { ApiError, apiRequest } from '../lib/api'
+import { useAuth } from '../features/auth/AuthContext'
 import type { AdminStrategy, AdminTier, AdminTiersResponse } from '../types/api'
 
 function AdminTiersPage() {
+  const { user } = useAuth()
+  const canManage = user?.role === 'super_admin'
   const [tiers, setTiers] = useState<AdminTier[]>([])
   const [strategies, setStrategies] = useState<AdminStrategy[]>([])
   const [loading, setLoading] = useState(true)
@@ -34,10 +37,12 @@ function AdminTiersPage() {
         </p>
       </div>
 
+      {!canManage && <p className="mb-6 border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">Super admin required to change this.</p>}
       {loading && <p className="border border-slate-200 bg-white p-6 text-sm text-slate-600">Loading tiers...</p>}
       {!loading && error && <div role="alert" className="border border-rose-200 bg-rose-50 p-6 text-sm text-rose-800">{error}</div>}
       {!loading && !error && (
-        <div className="space-y-6">
+        <fieldset disabled={!canManage} className="space-y-6">
+          <legend className="sr-only">Tier and strategy configuration</legend>
           {tiers.map((tier) => <TierEditor key={tier.id} tier={tier} strategies={strategies} onRefresh={refresh} />)}
 
           <div className="space-y-4">
@@ -47,7 +52,7 @@ function AdminTiersPage() {
             </div>
             {strategies.map((strategy) => <StrategyEditor key={strategy.id} strategy={strategy} onRefresh={refresh} />)}
           </div>
-        </div>
+        </fieldset>
       )}
     </section>
   )

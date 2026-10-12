@@ -102,6 +102,7 @@ function UserDashboardPage() {
 }
 
 function BalancePanel({ account }: { account: UserDashboardAccount }) {
+  const totalAccountValue = (Number(account.managed_balance) + Number(account.pending_balance)).toFixed(2)
   const profitLoss = Number(account.total_profit_loss)
   const percentage = Number(account.performance_percentage)
   const tradingActive = account.trading_status?.toLowerCase() === 'active'
@@ -110,10 +111,15 @@ function BalancePanel({ account }: { account: UserDashboardAccount }) {
     <article className="balance-panel dashboard-surface dashboard-hover">
       <div className="relative z-10 flex flex-wrap items-start justify-between gap-5">
         <div>
-          <p className="text-xs font-medium text-slate-400">Managed balance</p>
-          <p key={account.managed_balance} className="animated-value mt-3 break-all font-display text-4xl leading-none text-white sm:text-6xl">
-            {formatCurrency(account.managed_balance)}
+          <p className="text-xs font-medium text-slate-400">Total account value</p>
+          <p key={totalAccountValue} className="animated-value mt-3 break-all font-display text-4xl leading-none text-white sm:text-6xl">
+            {formatCurrency(totalAccountValue)}
           </p>
+          <p className="mt-2 text-xs text-slate-400">Includes pending balance, which is not counted as managed.</p>
+          <div className="mt-5 flex flex-wrap gap-3">
+            <Link to="/wallet" className="inline-flex rounded-lg bg-cyan-300 px-4 py-2 text-sm font-semibold text-slate-950 transition hover:bg-cyan-200">Deposit</Link>
+            <Link to="/wallet" className="inline-flex rounded-lg border border-white/15 px-4 py-2 text-sm font-semibold text-slate-100 transition hover:border-white/30">Withdraw</Link>
+          </div>
         </div>
         <span className={`trading-status${tradingActive ? ' is-active' : ''}`}>
           <span className="trading-status-indicator" aria-hidden="true" />
@@ -122,6 +128,15 @@ function BalancePanel({ account }: { account: UserDashboardAccount }) {
       </div>
 
       <div className="relative z-10 mt-9 grid grid-cols-2 gap-5 border-t border-white/[0.09] pt-5 sm:mt-11 sm:gap-8">
+        <div>
+          <p className="text-[11px] font-medium text-slate-400">Managed balance</p>
+          <p className="animated-value mt-2 text-lg font-semibold tabular-nums text-slate-100">{formatCurrency(account.managed_balance)}</p>
+        </div>
+        <div>
+          <p className="text-[11px] font-medium text-slate-400">Pending balance</p>
+          <p className="animated-value mt-2 text-lg font-semibold tabular-nums text-slate-100">{formatCurrency(account.pending_balance)}</p>
+          <p className="mt-1 text-[10px] text-slate-500">Not counted as managed.</p>
+        </div>
         <div>
           <p className="text-[11px] font-medium text-slate-400">Total profit / loss</p>
           <p

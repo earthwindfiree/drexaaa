@@ -1,9 +1,11 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { ApiError, apiRequest, initializeCsrfCookie } from '../lib/api'
-import type { AdminAccountDetail, AdminAccountResponse, AdminAccountSimulationResponse } from '../types/api'
+import { useAuth } from '../features/auth/AuthContext'
+import type { AdminAccountDetail, AdminAccountResponse, AdminAccountSimulationResponse, AdminPerformanceSnapshotResponse } from '../types/api'
 
 function AdminAccountDetailPage() {
+  const { user } = useAuth()
   const { accountId } = useParams<{ accountId: string }>()
   const [account, setAccount] = useState<AdminAccountDetail | null>(null)
   const [loading, setLoading] = useState(true)
@@ -43,23 +45,90 @@ function AdminAccountDetailPage() {
       <Link to="/admin/accounts" className="text-sm font-semibold text-cyan-700 hover:text-cyan-900">Back to accounts</Link>
       {isLoading && <p className="mt-6 border border-slate-200 bg-white p-6 text-sm text-slate-600">Loading account...</p>}
       {!isLoading && displayError && <div role="alert" className="mt-6 border border-rose-200 bg-rose-50 p-6 text-sm text-rose-800">{displayError}</div>}
-      {!isLoading && !displayError && account && <AccountDetail key={`${account.id}-${account.updated_at}`} account={account} onUpdated={() => setReloadToken((value) => value + 1)} />}
+      {!isLoading && !displayError && account && <AccountDetail key={`${account.id}-${account.updated_at}`} account={account} canCreateSnapshot={user?.role === 'super_admin'} onUpdated={() => setReloadToken((value) => value + 1)} />}
     </section>
   )
 }
 
-function AccountDetail({ account, onUpdated }: { account: AdminAccountDetail; onUpdated: () => void }) {
+function AccountDetail({ account, canCreateSnapshot, onUpdated }: { account: AdminAccountDetail; canCreateSnapshot: boolean; onUpdated: () => void }) {
   return (
     <>
       <div className="mb-8 mt-5 flex flex-wrap items-end justify-between gap-4"><div><p className="text-sm font-semibold uppercase tracking-[0.18em] text-cyan-700">Account #{account.id}</p><h1 className="mt-2 text-3xl font-semibold tracking-tight text-slate-950">{account.user?.name ?? 'Unknown user'}</h1><p className="mt-2 text-sm text-slate-600">Read-only simulated account view.</p></div><span className="border border-slate-300 bg-white px-3 py-2 text-xs font-semibold uppercase tracking-[0.14em] text-slate-600">{account.trading_status}</span></div>
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4"><Metric label="Managed balance" value={`$${account.managed_balance}`} /><Metric label="Pending balance" value={`$${account.pending_balance}`} /><Metric label="Total P/L" value={`$${account.total_profit_loss}`} /><Metric label="Performance" value={`${account.performance_percentage}%`} /></div>
       <SimulationControls account={account} onUpdated={onUpdated} />
+      {canCreateSnapshot && <SnapshotControls account={account} onCreated={onUpdated} />}
       <div className="mt-8 grid gap-6 lg:grid-cols-2"><InfoPanel title="User information"><InfoLine label="Name" value={account.user?.name ?? 'Not available'} /><InfoLine label="Email" value={account.user?.email ?? 'Not available'} /><InfoLine label="Country" value={account.user?.country ?? 'Not provided'} /><InfoLine label="Role / status" value={account.user ? `${account.user.role} · ${account.user.status}` : 'Not available'} /></InfoPanel><InfoPanel title="Tier and strategy"><InfoLine label="Tier" value={account.tier?.name ?? 'Unassigned'} /><InfoLine label="Minimum balance" value={account.tier ? `$${account.tier.minimum_balance}` : 'Not available'} /><InfoLine label="Strategy" value={account.tier?.strategy?.name ?? 'Not assigned'} /><InfoLine label="Risk profile" value={account.tier?.strategy?.risk_profile ?? 'Not available'} /></InfoPanel></div>
-      <HistoryTable title="Performance history" emptyLabel="No performance snapshots are recorded." headers={['Snapshot', 'Managed balance', 'P/L', 'Performance']} rows={account.performance_snapshots.map((snapshot) => [formatDate(snapshot.snapshot_at), `$${snapshot.managed_balance}`, `$${snapshot.total_profit_loss}`, `${snapshot.performance_percentage}%`])} />
+      <HistoryTable title="Performance history" emptyLabel="No performance snapshots are recorded." headers={['Snapshot', 'Managed balance', 'P/L', 'Performance', 'Note', 'Created by']} rows={account.performance_snapshots.map((snapshot) => [formatDate(snapshot.snapshot_at), `$${snapshot.managed_balance}`, `$${snapshot.total_profit_loss}`, `${snapshot.performance_percentage}%`, snapshot.note ?? '—', snapshot.created_by === null ? '—' : `User #${snapshot.created_by}`])} />
       <HistoryTable title="Transactions" emptyLabel="No transactions are recorded." headers={['Date', 'Type', 'Asset', 'USD value', 'Status', 'Reference']} rows={account.transactions.map((transaction) => [formatDate(transaction.occurred_at), transaction.type, transaction.asset?.symbol ?? 'N/A', `$${transaction.usd_amount}`, transaction.status, transaction.reference])} />
       <HistoryTable title="Deposits" emptyLabel="No deposits are recorded." headers={['Date', 'Asset', 'Crypto amount', 'USD value', 'Status', 'Reference']} rows={account.deposits.map((deposit) => [formatDate(deposit.created_at), deposit.asset?.symbol ?? 'N/A', deposit.crypto_amount, `$${deposit.usd_value}`, deposit.status, deposit.transaction_reference])} />
       <HistoryTable title="Withdrawals" emptyLabel="No withdrawals are recorded." headers={['Date', 'Asset', 'Amount', 'Crypto amount', 'Status', 'Destination']} rows={account.withdrawals.map((withdrawal) => [formatDate(withdrawal.created_at), withdrawal.asset?.symbol ?? 'N/A', `$${withdrawal.amount}`, withdrawal.crypto_amount ?? 'N/A', withdrawal.status, withdrawal.destination_wallet])} />
     </>
+  )
+}
+
+function SnapshotControls({ account, onCreated }: { account: AdminAccountDetail; onCreated: () => void }) {
+  const [managedBalance, setManagedBalance] = useState(account.managed_balance)
+  const [totalProfitLoss, setTotalProfitLoss] = useState(account.total_profit_loss)
+  const [performancePercentage, setPerformancePercentage] = useState(account.performance_percentage)
+  const [snapshotAt, setSnapshotAt] = useState(localDateTimeValue())
+  const [note, setNote] = useState('')
+  const [submitting, setSubmitting] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [success, setSuccess] = useState(false)
+
+  async function submit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    setError(null)
+    setSuccess(false)
+
+    if (!window.confirm(`Create a performance snapshot?\n\nManaged balance: $${managedBalance}\nTotal P/L: $${totalProfitLoss}\nPerformance: ${performancePercentage}%`)) return
+
+    setSubmitting(true)
+
+    try {
+      await initializeCsrfCookie()
+      await apiRequest<AdminPerformanceSnapshotResponse>(`/api/admin/accounts/${account.id}/snapshots`, {
+        method: 'POST',
+        body: JSON.stringify({
+          managed_balance: managedBalance,
+          total_profit_loss: totalProfitLoss,
+          performance_percentage: performancePercentage,
+          snapshot_at: new Date(snapshotAt).toISOString(),
+          note: note || null,
+        }),
+      })
+      setSuccess(true)
+      onCreated()
+    } catch (requestError: unknown) {
+      if (requestError instanceof ApiError && requestError.status === 401) setError('Your session has expired. Please sign in again.')
+      else if (requestError instanceof ApiError && requestError.status === 403) setError('A super admin is required to create performance snapshots.')
+      else if (requestError instanceof ApiError && Object.values(requestError.errors).length > 0) setError(Object.values(requestError.errors).flat().join(' '))
+      else setError(requestError instanceof Error ? requestError.message : 'Unable to create performance snapshot.')
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  return (
+    <section className="mt-8 border border-violet-200 bg-violet-50 p-5">
+      <div className="mb-5">
+        <p className="text-sm font-semibold uppercase tracking-[0.18em] text-violet-800">Performance history</p>
+        <h2 className="mt-2 text-xl font-semibold text-slate-950">Add snapshot</h2>
+        <p className="mt-2 text-sm text-slate-700">Record historical demo values without changing the account balance.</p>
+      </div>
+      <form onSubmit={(event) => void submit(event)} className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+        <label className="text-sm font-medium text-slate-700">Managed balance<input required value={managedBalance} onChange={(event) => setManagedBalance(event.target.value)} inputMode="decimal" className="mt-1 block w-full border border-slate-300 bg-white px-3 py-2 text-sm text-slate-950 outline-none focus:border-violet-700" /></label>
+        <label className="text-sm font-medium text-slate-700">Total P/L<input required value={totalProfitLoss} onChange={(event) => setTotalProfitLoss(event.target.value)} inputMode="decimal" className="mt-1 block w-full border border-slate-300 bg-white px-3 py-2 text-sm text-slate-950 outline-none focus:border-violet-700" /></label>
+        <label className="text-sm font-medium text-slate-700">Performance %<input required value={performancePercentage} onChange={(event) => setPerformancePercentage(event.target.value)} inputMode="decimal" className="mt-1 block w-full border border-slate-300 bg-white px-3 py-2 text-sm text-slate-950 outline-none focus:border-violet-700" /></label>
+        <label className="text-sm font-medium text-slate-700">Snapshot date and time<input required type="datetime-local" value={snapshotAt} onChange={(event) => setSnapshotAt(event.target.value)} className="mt-1 block w-full border border-slate-300 bg-white px-3 py-2 text-sm text-slate-950 outline-none focus:border-violet-700" /></label>
+        <label className="text-sm font-medium text-slate-700 md:col-span-2">Note (optional)<input maxLength={255} value={note} onChange={(event) => setNote(event.target.value)} className="mt-1 block w-full border border-slate-300 bg-white px-3 py-2 text-sm text-slate-950 outline-none focus:border-violet-700" /></label>
+        <div className="flex flex-wrap items-center gap-3 md:col-span-2 xl:col-span-3">
+          <button type="submit" disabled={submitting} className="bg-violet-800 px-4 py-2 text-sm font-semibold text-white transition hover:bg-violet-900 disabled:opacity-60">{submitting ? 'Saving...' : 'Create snapshot'}</button>
+          {success && <p role="status" className="text-sm font-medium text-emerald-700">Snapshot created and history refreshed.</p>}
+          {error && <p role="alert" className="text-sm font-medium text-rose-700">{error}</p>}
+        </div>
+      </form>
+    </section>
   )
 }
 
@@ -111,5 +180,6 @@ function InfoPanel({ title, children }: { title: string; children: React.ReactNo
 function InfoLine({ label, value }: { label: string; value: string }) { return <div className="flex flex-wrap justify-between gap-3 py-3 text-sm"><span className="text-slate-500">{label}</span><span className="font-medium text-slate-950">{value}</span></div> }
 function HistoryTable({ title, emptyLabel, headers, rows }: { title: string; emptyLabel: string; headers: string[]; rows: string[][] }) { return <section className="mt-8"><h2 className="mb-3 text-xl font-semibold text-slate-950">{title}</h2>{rows.length === 0 ? <div className="border border-slate-200 bg-white p-6 text-sm text-slate-600">{emptyLabel}</div> : <div className="overflow-x-auto border border-slate-200 bg-white shadow-sm"><table className="w-full min-w-[720px] text-left text-sm"><thead className="border-b border-slate-200 bg-slate-50 text-xs uppercase tracking-[0.12em] text-slate-500"><tr>{headers.map((header) => <th key={header} className="px-4 py-3 font-semibold">{header}</th>)}</tr></thead><tbody className="divide-y divide-slate-100">{rows.map((row, rowIndex) => <tr key={`${title}-${rowIndex}`} className="text-slate-700">{row.map((value, cellIndex) => <td key={`${title}-${rowIndex}-${cellIndex}`} className="px-4 py-3">{value}</td>)}</tr>)}</tbody></table></div>}</section> }
 function formatDate(value: string | null): string { return value ? new Intl.DateTimeFormat('en', { dateStyle: 'medium' }).format(new Date(value)) : 'Not available' }
+function localDateTimeValue(): string { return new Date(Date.now() - new Date().getTimezoneOffset() * 60_000).toISOString().slice(0, 16) }
 
 export default AdminAccountDetailPage

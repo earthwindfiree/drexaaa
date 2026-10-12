@@ -326,7 +326,7 @@ export interface AdminAccountDetail {
     display_settings: Record<string, unknown> | null
     strategy: { id: number; name: string; description: string; risk_profile: string; active: boolean } | null
   } | null
-  performance_snapshots: Array<{ id: number; managed_balance: string; total_profit_loss: string; performance_percentage: string; snapshot_at: string }>
+  performance_snapshots: AdminPerformanceSnapshot[]
   transactions: Array<{ id: number; type: string; status: string; asset: { id: number; symbol: string; name: string } | null; crypto_amount: string | null; usd_amount: string; price_snapshot: string | null; reference: string; description: string | null; occurred_at: string }>
   deposits: Array<{ id: number; asset: { id: number; symbol: string; name: string } | null; crypto_amount: string; price_snapshot: string; usd_value: string; transaction_reference: string; status: string; rejection_reason: string | null; reviewed_at: string | null; created_at: string }>
   withdrawals: Array<{ id: number; asset: { id: number; symbol: string; name: string } | null; amount: string; destination_wallet: string; crypto_amount: string | null; price_snapshot: string | null; status: string; rejection_reason: string | null; reviewed_at: string | null; created_at: string }>
@@ -338,6 +338,20 @@ export interface AdminAccountResponse {
 
 export interface AdminAccountSimulationResponse {
   data: Pick<AdminAccountDetail, 'id' | 'managed_balance' | 'pending_balance' | 'total_profit_loss' | 'performance_percentage' | 'trading_status'> & { tier_id: number | null }
+}
+
+export interface AdminPerformanceSnapshot {
+  id: number
+  managed_balance: string
+  total_profit_loss: string
+  performance_percentage: string
+  snapshot_at: string
+  note: string | null
+  created_by: number | null
+}
+
+export interface AdminPerformanceSnapshotResponse {
+  data: AdminPerformanceSnapshot & { account_id: number }
 }
 
 export interface AdminWallet {
