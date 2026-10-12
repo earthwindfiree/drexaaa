@@ -15,7 +15,12 @@ class PublicStrategiesController extends Controller
             ->where('active', true)
             ->with(['tiers' => fn ($query) => $query->orderBy('minimum_balance')->orderBy('id')])
             ->whereHas('tiers')
-            ->orderBy('name')
+            ->orderBy(Tier::query()
+                ->select('minimum_balance')
+                ->whereColumn('tiers.strategy_id', 'strategies.id')
+                ->orderBy('minimum_balance')
+                ->orderBy('id')
+                ->limit(1))
             ->get();
 
         return response()->json([

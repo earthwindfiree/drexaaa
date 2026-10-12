@@ -66,12 +66,12 @@ class TwoFactorAuthenticationService
 
     public function hashRecoveryCodes(array $codes): array
     {
-        return array_map(static fn (string $code): string => Hash::make($code), $codes);
+        return array_map(fn (string $code): string => Hash::make($this->normalizeRecoveryCode($code)), $codes);
     }
 
     public function consumeRecoveryCode(User $user, string $code): bool
     {
-        $candidate = strtoupper(preg_replace('/[^A-Z0-9]/i', '', $code) ?? '');
+        $candidate = $this->normalizeRecoveryCode($code);
         $codes = $user->two_factor_recovery_codes ?? [];
 
         foreach ($codes as $index => $hash) {
@@ -85,6 +85,11 @@ class TwoFactorAuthenticationService
         }
 
         return false;
+    }
+
+    private function normalizeRecoveryCode(string $code): string
+    {
+        return strtoupper(preg_replace('/[^A-Z0-9]/i', '', $code) ?? '');
     }
 
     private function encodeBase32(string $value): string

@@ -103,7 +103,7 @@ class TwoFactorAuthenticationTest extends TestCase
     {
         $service = app(TwoFactorAuthenticationService::class);
         $secret = $service->generateSecret();
-        $recoveryCode = 'A1B2C3D4';
+        $recoveryCode = 'A1B2-C3D4';
         $user = User::factory()->create([
             'email' => 'recovery@example.com',
             'password' => 'Password123!',
@@ -159,11 +159,12 @@ class TwoFactorAuthenticationTest extends TestCase
     {
         $twoFactor = app(TwoFactorAuthenticationService::class);
         $secret = $twoFactor->generateSecret();
+        $oldCodes = $twoFactor->generateRecoveryCodes();
         $user = User::factory()->create([
             'password' => 'Password123!',
             'two_factor_secret' => $secret,
             'two_factor_confirmed_at' => now(),
-            'two_factor_recovery_codes' => $twoFactor->hashRecoveryCodes(['OLD-CODE']),
+            'two_factor_recovery_codes' => $twoFactor->hashRecoveryCodes($oldCodes),
             'two_factor_last_used_counter' => intdiv(time(), 30) - 1,
         ]);
         $code = $twoFactor->codeForCounter($secret, intdiv(time(), 30));
@@ -175,10 +176,25 @@ class TwoFactorAuthenticationTest extends TestCase
 
         $newCodes = $response->json('recovery_codes');
         $this->assertCount(10, $newCodes);
-        $this->assertFalse($twoFactor->consumeRecoveryCode($user->fresh(), 'OLD-CODE'));
+        $this->assertFalse($twoFactor->consumeRecoveryCode($user->fresh(), $oldCodes[0]));
         $this->assertDatabaseHas('user_notifications', [
             'user_id' => $user->id,
             'title' => 'Two-factor recovery codes regenerated',
         ]);
+    }
+
+    public function test_generated_recovery_codes_accept_dashed_and_lowercase_undashed_input_once(): void
+    {
+        $service = app(TwoFactorAuthenticationService::class);
+        $codes = $service->generateRecoveryCodes();
+        $user = User::factory()->create([
+            'two_factor_recovery_codes' => $service->hashRecoveryCodes($codes),
+        ]);
+
+        $this->assertTrue($service->consumeRecoveryCode($user, $codes[0]));
+        $this->assertFalse($service->consumeRecoveryCode($user->fresh(), strtolower(str_replace('-', '', $codes[0]))));
+
+        $this->assertTrue($service->consumeRecoveryCode($user->fresh(), strtolower(str_replace('-', '', $codes[1]))));
+        $this->assertFalse($service->consumeRecoveryCode($user->fresh(), $codes[1]));
     }
 }

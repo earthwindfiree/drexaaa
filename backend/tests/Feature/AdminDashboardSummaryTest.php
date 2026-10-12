@@ -129,6 +129,19 @@ class AdminDashboardSummaryTest extends TestCase
             ->assertJsonPath('data.total_accounts', 3);
     }
 
+    public function test_balance_totals_are_added_without_float_precision_loss(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $this->createAccount(User::factory()->create(), '675.40', '0.00');
+        $this->createAccount(User::factory()->create(), '0.10', '0.00');
+        $this->createAccount(User::factory()->create(), '1.10', '0.00');
+
+        $this->actingAs($admin)
+            ->getJson('/api/admin/dashboard/summary')
+            ->assertOk()
+            ->assertJsonPath('data.total_managed_balance', '676.60');
+    }
+
     private function createAccount(User $user, string $managedBalance, string $pendingBalance): Account
     {
         $account = new Account;
