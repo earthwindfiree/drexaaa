@@ -149,8 +149,9 @@ function LandingPage() {
               </div>
             </div>
 
-            <div className="relative">
-              <div className="rounded-[2rem] border border-slate-800 bg-slate-900/80 p-4 shadow-2xl shadow-slate-950/60 backdrop-blur-sm">
+            <div className="relative isolate">
+              <div className="public-market-art" aria-hidden="true" />
+              <div className="relative rounded-[2rem] border border-slate-800 bg-slate-900/80 p-4 shadow-2xl shadow-slate-950/60 backdrop-blur-sm">
                 <div className="rounded-[1.5rem] border border-slate-800 bg-slate-950 p-5">
                   <div className="flex items-center justify-between">
                     <div>

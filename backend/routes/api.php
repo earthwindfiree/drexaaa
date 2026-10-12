@@ -58,6 +58,10 @@ Route::middleware(['auth:sanctum', EnsureVerifiedUser::class])->group(function (
     Route::get('/profile', [AuthController::class, 'me']);
     Route::patch('/profile', [AuthController::class, 'updateProfile'])->middleware('throttle:6,1');
     Route::patch('/profile/password', [AuthController::class, 'updatePassword'])->middleware('throttle:6,1');
+    Route::post('/profile/two-factor/setup', [AuthController::class, 'setupTwoFactor'])->middleware('throttle:6,1');
+    Route::post('/profile/two-factor/confirm', [AuthController::class, 'confirmTwoFactor'])->middleware('throttle:6,1');
+    Route::post('/profile/two-factor/recovery-codes', [AuthController::class, 'regenerateTwoFactorRecoveryCodes'])->middleware('throttle:6,1');
+    Route::delete('/profile/two-factor', [AuthController::class, 'disableTwoFactor'])->middleware('throttle:6,1');
     Route::get('/dashboard', [UserAccountController::class, 'dashboard']);
     Route::get('/portfolio', [UserAccountController::class, 'portfolio']);
     Route::get('/markets', [UserMarketsController::class, 'index']);

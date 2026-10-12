@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 560" fill="none">
+  <defs>
+    <linearGradient id="line" x1="120" y1="392" x2="610" y2="130" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#4A9A96" stop-opacity=".18"/>
+      <stop offset=".48" stop-color="#81C9C3" stop-opacity=".8"/>
+      <stop offset="1" stop-color="#B0E5DF" stop-opacity=".52"/>
+    </linearGradient>
+    <linearGradient id="area" x1="360" y1="145" x2="360" y2="430" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#81C9C3" stop-opacity=".16"/>
+      <stop offset="1" stop-color="#81C9C3" stop-opacity="0"/>
+    </linearGradient>
+    <radialGradient id="halo" cx="0" cy="0" r="1" gradientTransform="matrix(185 0 0 185 485 150)" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#81C9C3" stop-opacity=".14"/>
+      <stop offset="1" stop-color="#81C9C3" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <circle cx="485" cy="150" r="185" fill="url(#halo)"/>
+  <path stroke="#B6DCD8" stroke-opacity=".11" stroke-dasharray="3 10" d="M72 120h576M72 220h576M72 320h576M72 420h576"/>
+  <path stroke="#B6DCD8" stroke-opacity=".08" stroke-dasharray="3 10" d="M160 72v392M300 72v392M440 72v392M580 72v392"/>
+  <path fill="url(#area)" d="m72 384 73-53 66 17 77-105 64 31 71-93 66 24 67-92 52 14v305H72z"/>
+  <path stroke="url(#line)" stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="m72 384 73-53 66 17 77-105 64 31 71-93 66 24 67-92 52 14"/>
+  <circle cx="489" cy="181" r="7" fill="#B0E5DF" fill-opacity=".9"/>
+  <circle cx="489" cy="181" r="15" stroke="#81C9C3" stroke-opacity=".3"/>
+  <g stroke="#81C9C3" stroke-linecap="round" stroke-opacity=".22">
+    <path d="M116 260v46m-8-33h16m104-51v71m-8-52h16m104-96v43m-8-30h16m104-48v63m-8-47h16m104-75v53m-8-38h16"/>
+  </g>
+</svg>
