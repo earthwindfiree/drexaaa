@@ -12,6 +12,13 @@ class EnsureVerifiedUser
     {
         $user = $request->user();
 
+        if ($user->status !== 'active') {
+            return response()->json([
+                'code' => 'account_suspended',
+                'message' => 'This account is suspended.',
+            ], 403);
+        }
+
         if (! in_array($user->role, ['admin', 'super_admin'], true) && ! $user->hasVerifiedEmail()) {
             return response()->json([
                 'code' => 'email_verification_required',

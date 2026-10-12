@@ -30,8 +30,8 @@ class PublicStrategiesTest extends TestCase
         $response = $this->getJson('/api/strategies')
             ->assertOk()
             ->assertJsonCount(4, 'data')
-            ->assertJsonPath('data.0.name', 'Apex')
-            ->assertJsonPath('data.3.name', 'Momentum');
+            ->assertJsonPath('data.0.name', 'Foundation')
+            ->assertJsonPath('data.3.name', 'Apex');
 
         foreach ($response->json('data') as $strategy) {
             $this->getJson('/api/strategies/'.$strategy['id'])

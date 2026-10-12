@@ -18,6 +18,8 @@ use App\Models\Transaction;
 use App\Models\User;
 use App\Models\UserNotification;
 use App\Models\Withdrawal;
+use App\Services\DepositReviewService;
+use App\Services\WithdrawalReviewService;
 use App\Services\WithdrawalAvailabilityService;
 use Database\Seeders\DatabaseSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -45,7 +47,7 @@ class DemoDataSeederTest extends TestCase
         $this->assertSame(4, AssetWallet::query()->count());
         $this->assertSame(6, Deposit::query()->count());
         $this->assertSame(3, Withdrawal::query()->count());
-        $this->assertSame(9, Transaction::query()->count());
+        $this->assertSame(7, Transaction::query()->count());
         $this->assertSame(8, PerformanceSnapshot::query()->count());
         $this->assertSame(4, UserNotification::query()->count());
         $this->assertSame(4, MarketPrice::query()->count());
@@ -79,7 +81,7 @@ class DemoDataSeederTest extends TestCase
         $this->assertSame(1, $active->deposits()->where('status', DepositStatus::Pending)->count());
         $this->assertSame(1, $active->withdrawals()->where('status', WithdrawalStatus::Approved)->count());
         $this->assertSame(1, $active->withdrawals()->where('status', WithdrawalStatus::Pending)->count());
-        $this->assertSame(2, $active->transactions()->where('status', TransactionStatus::Pending)->count());
+        $this->assertSame(0, $active->transactions()->where('status', TransactionStatus::Pending)->count());
         $this->assertGreaterThan(0, $active->user->notifications()->whereNull('read_at')->count());
 
         foreach ([$active, $highTier] as $account) {
@@ -88,6 +90,29 @@ class DemoDataSeederTest extends TestCase
             $this->assertTrue($snapshots->last()->snapshot_at->isToday());
             $this->assertSame($account->managed_balance, $snapshots->last()->managed_balance);
         }
+    }
+
+    public function test_pending_demo_transactions_are_created_only_when_deposit_or_withdrawal_is_approved(): void
+    {
+        $this->seed(DatabaseSeeder::class);
+        $reviewer = User::query()->where('email', 'admin@example.test')->firstOrFail();
+        $deposit = Deposit::query()->where('transaction_reference', 'DEMO-DEP-ALEX-003')->firstOrFail();
+        $withdrawal = Withdrawal::query()->where('destination_wallet', 'DEMO-DEST-ALEX-PENDING')->firstOrFail();
+
+        $this->assertSame(0, Transaction::query()->where('deposit_id', $deposit->id)->count());
+        $this->assertSame(0, Transaction::query()->where('withdrawal_id', $withdrawal->id)->count());
+
+        app(DepositReviewService::class)->confirm($deposit, $reviewer);
+        app(WithdrawalReviewService::class)->approve($withdrawal, $reviewer);
+
+        $this->assertSame(1, Transaction::query()
+            ->where('deposit_id', $deposit->id)
+            ->where('status', TransactionStatus::Completed)
+            ->count());
+        $this->assertSame(1, Transaction::query()
+            ->where('withdrawal_id', $withdrawal->id)
+            ->where('status', TransactionStatus::Completed)
+            ->count());
     }
 
     private function demoRecordCounts(): array
