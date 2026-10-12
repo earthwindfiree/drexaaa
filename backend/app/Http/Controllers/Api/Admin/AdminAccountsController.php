@@ -6,8 +6,10 @@ use App\Http\Controllers\Controller;
 use App\Models\Account;
 use App\Services\AdminAccountService;
 use App\Services\AdminAccountSimulationService;
+use App\Services\PerformanceSnapshotService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\ValidationException;
 
 class AdminAccountsController extends Controller
@@ -80,6 +82,8 @@ class AdminAccountsController extends Controller
                     'total_profit_loss' => $snapshot->total_profit_loss,
                     'performance_percentage' => $snapshot->performance_percentage,
                     'snapshot_at' => $snapshot->snapshot_at?->toISOString(),
+                    'note' => $snapshot->note,
+                    'created_by' => $snapshot->created_by,
                 ])->values(),
                 'transactions' => $account->transactions->map(fn ($transaction): array => [
                     'id' => $transaction->id,
@@ -133,6 +137,47 @@ class AdminAccountsController extends Controller
                 'updated_at' => $account->updated_at?->toISOString(),
             ],
         ]);
+    }
+
+    public function createSnapshot(Request $request, Account $account, PerformanceSnapshotService $snapshotService): JsonResponse
+    {
+        Gate::authorize('super-admin');
+        $allowedFields = ['managed_balance', 'total_profit_loss', 'performance_percentage', 'snapshot_at', 'note'];
+
+        if (array_diff(array_keys($request->all()), $allowedFields) !== []) {
+            throw ValidationException::withMessages([
+                'snapshot' => ['Only supported performance snapshot fields may be provided.'],
+            ]);
+        }
+
+        $validated = $request->validate([
+            'managed_balance' => ['required', 'string', 'regex:/\A\d{1,18}(?:\.\d{1,2})?\z/'],
+            'total_profit_loss' => ['required', 'string', 'regex:/\A-?\d{1,18}(?:\.\d{1,2})?\z/'],
+            'performance_percentage' => ['required', 'string', 'regex:/\A-?\d{1,5}(?:\.\d{1,4})?\z/'],
+            'snapshot_at' => ['required', 'date', 'before_or_equal:now'],
+            'note' => ['nullable', 'string', 'max:255'],
+        ]);
+
+        $snapshot = $snapshotService->create(
+            $request->user(),
+            $account,
+            $validated['managed_balance'],
+            $validated['total_profit_loss'],
+            $validated['performance_percentage'],
+            \Illuminate\Support\Carbon::parse($validated['snapshot_at']),
+            $validated['note'] ?? null,
+        );
+
+        return response()->json(['data' => [
+            'id' => $snapshot->id,
+            'account_id' => $snapshot->account_id,
+            'managed_balance' => $snapshot->managed_balance,
+            'total_profit_loss' => $snapshot->total_profit_loss,
+            'performance_percentage' => $snapshot->performance_percentage,
+            'snapshot_at' => $snapshot->snapshot_at?->toISOString(),
+            'note' => $snapshot->note,
+            'created_by' => $snapshot->created_by,
+        ]], 201);
     }
 
     public function updateSimulation(Request $request, Account $account, AdminAccountSimulationService $simulationService): JsonResponse

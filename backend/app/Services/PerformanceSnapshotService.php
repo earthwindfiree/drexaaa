@@ -23,6 +23,7 @@ class PerformanceSnapshotService
         string $totalProfitLoss,
         string $performancePercentage,
         Carbon $snapshotAt,
+        ?string $note = null,
     ): PerformanceSnapshot {
         try {
             $managedBalance = FixedDecimalMath::normalize($managedBalance, 18, 2, 'managed_balance');
@@ -35,13 +36,15 @@ class PerformanceSnapshotService
         }
 
         try {
-            return DB::transaction(function () use ($actor, $account, $managedBalance, $totalProfitLoss, $performancePercentage, $snapshotAt): PerformanceSnapshot {
+            return DB::transaction(function () use ($actor, $account, $managedBalance, $totalProfitLoss, $performancePercentage, $snapshotAt, $note): PerformanceSnapshot {
                 $snapshot = new PerformanceSnapshot;
                 $snapshot->account()->associate($account);
+                $snapshot->created_by = $actor->getKey();
                 $snapshot->managed_balance = $managedBalance;
                 $snapshot->total_profit_loss = $totalProfitLoss;
                 $snapshot->performance_percentage = $performancePercentage;
                 $snapshot->snapshot_at = $snapshotAt;
+                $snapshot->note = $note;
                 $snapshot->save();
 
                 $this->auditLogService->record(
@@ -55,6 +58,8 @@ class PerformanceSnapshotService
                         'total_profit_loss' => $snapshot->total_profit_loss,
                         'performance_percentage' => $snapshot->performance_percentage,
                         'snapshot_at' => $snapshot->snapshot_at->toISOString(),
+                        'note' => $snapshot->note,
+                        'created_by' => $snapshot->created_by,
                     ],
                 );
 

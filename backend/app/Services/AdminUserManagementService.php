@@ -17,9 +17,12 @@ class AdminUserManagementService
             $target = User::query()->lockForUpdate()->findOrFail($target->getKey());
             $newRole = $changes['role'] ?? $target->role;
 
-            if (array_key_exists('status', $changes) && ! in_array($newRole, ['admin', 'super_admin'], true)) {
+            if ($target->is($actor) && (
+                $newRole !== $target->role
+                || (($changes['status'] ?? $target->status) === 'suspended' && $target->status !== 'suspended')
+            )) {
                 throw ValidationException::withMessages([
-                    'status' => ['Only admin accounts may be suspended or reactivated here.'],
+                    'user' => ['You may not suspend or change the role of your own account.'],
                 ]);
             }
 

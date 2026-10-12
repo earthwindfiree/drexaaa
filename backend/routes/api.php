@@ -83,6 +83,7 @@ Route::prefix('admin')->middleware(['auth:sanctum', 'can:admin'])->group(functio
     Route::get('/accounts', [AdminAccountsController::class, 'index']);
     Route::get('/accounts/{account}', [AdminAccountsController::class, 'show']);
     Route::patch('/accounts/{account}/simulation', [AdminAccountsController::class, 'updateSimulation']);
+    Route::post('/accounts/{account}/snapshots', [AdminAccountsController::class, 'createSnapshot']);
     Route::get('/users', [AdminUsersController::class, 'index']);
     Route::patch('/users/{user}/access', [AdminUsersController::class, 'updateAccess']);
     Route::get('/markets', [AdminMarketsController::class, 'index']);

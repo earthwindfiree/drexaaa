@@ -140,12 +140,15 @@ class AdminAccountsTest extends TestCase
         ]);
         $asset = Asset::create(['symbol' => 'DET', 'name' => 'Detail Asset']);
         $wallet = AssetWallet::create(['asset_id' => $asset->id, 'network' => 'demo', 'wallet_address' => 'detail-wallet']);
+        $snapshotCreator = User::factory()->create(['role' => 'super_admin']);
         $this->createRecord(PerformanceSnapshot::class, [
             'account_id' => $account->id,
+            'created_by' => $snapshotCreator->id,
             'managed_balance' => '5000.00',
             'total_profit_loss' => '500.00',
             'performance_percentage' => '10.0000',
             'snapshot_at' => now()->subDay(),
+            'note' => 'Monthly review',
         ]);
         $deposit = $this->createRecord(Deposit::class, [
             'user_id' => $owner->id,
@@ -194,6 +197,8 @@ class AdminAccountsTest extends TestCase
             ->assertJsonPath('data.tier.name', 'Detail Tier')
             ->assertJsonPath('data.tier.strategy.name', 'Detail Strategy')
             ->assertJsonPath('data.performance_snapshots.0.managed_balance', '5000.00')
+            ->assertJsonPath('data.performance_snapshots.0.note', 'Monthly review')
+            ->assertJsonPath('data.performance_snapshots.0.created_by', $snapshotCreator->id)
             ->assertJsonPath('data.transactions.0.id', $transaction->id)
             ->assertJsonPath('data.deposits.0.id', $deposit->id)
             ->assertJsonPath('data.withdrawals.0.id', $withdrawal->id)
