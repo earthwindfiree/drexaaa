@@ -212,7 +212,7 @@ function UserAccessControls({ user, onSaved }: { user: AdminUser; onSaved: () =>
     event.preventDefault()
     const changes: Record<string, string> = {}
     if (role !== user.role) changes.role = role
-    if (['admin', 'super_admin'].includes(user.role) && status !== user.status) changes.status = status
+    if (status !== user.status) changes.status = status
     if (Object.keys(changes).length === 0) return
 
     setSaving(true)
@@ -232,7 +232,7 @@ function UserAccessControls({ user, onSaved }: { user: AdminUser; onSaved: () =>
     }
   }
 
-  const changed = role !== user.role || (['admin', 'super_admin'].includes(user.role) && status !== user.status)
+  const changed = role !== user.role || status !== user.status
 
   return (
     <form onSubmit={(event) => void save(event)} className="min-w-52 space-y-2">
@@ -241,12 +241,10 @@ function UserAccessControls({ user, onSaved }: { user: AdminUser; onSaved: () =>
         <option value="admin">Admin</option>
         <option value="super_admin">Super admin</option>
       </select>
-      {['admin', 'super_admin'].includes(user.role) && (
-        <select aria-label={`Admin account status for ${user.email}`} value={status} onChange={(event) => setStatus(event.target.value)} className="block w-full border border-slate-300 bg-white px-2 py-1.5 text-xs text-slate-900">
-          <option value="active">Active</option>
-          <option value="suspended">Suspended</option>
-        </select>
-      )}
+      <select aria-label={`Account status for ${user.email}`} value={status} onChange={(event) => setStatus(event.target.value)} className="block w-full border border-slate-300 bg-white px-2 py-1.5 text-xs text-slate-900">
+        <option value="active">Active</option>
+        <option value="suspended">Suspended</option>
+      </select>
       <button type="submit" disabled={!changed || saving} className="border border-slate-300 px-2 py-1.5 text-xs font-semibold text-slate-700 disabled:opacity-50">
         {saving ? 'Saving...' : 'Save access'}
       </button>

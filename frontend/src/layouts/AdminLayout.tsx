@@ -5,14 +5,14 @@ import { useAuth } from '../features/auth/AuthContext'
 const adminNavigation = [
   { label: 'Dashboard', to: '/admin' },
   { label: 'Users', to: '/admin/users' },
-  { label: 'Accounts', to: '/admin/accounts' },
-  { label: 'Markets', to: '/admin/markets' },
+  { label: 'Account Simulation', to: '/admin/accounts' },
+  { label: 'Market Prices', to: '/admin/markets' },
   { label: 'Deposits', to: '/admin/deposits' },
   { label: 'Withdrawals', to: '/admin/withdrawals' },
   { label: 'Transactions', to: '/admin/transactions' },
   { label: 'Notifications', to: '/admin/notifications' },
   { label: 'Audit Logs', to: '/admin/audit-logs' },
-  { label: 'Tiers', to: '/admin/tiers' },
+  { label: 'Tiers & Strategies', to: '/admin/tiers' },
   { label: 'Settings', to: '/admin/settings' },
 ]
 
