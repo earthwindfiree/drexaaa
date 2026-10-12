@@ -33,31 +33,6 @@ import PublicStrategyDetailsPage from './pages/PublicStrategyDetailsPage'
 import PublicTermsPage from './pages/PublicTermsPage'
 import PublicPrivacyPage from './pages/PublicPrivacyPage'
 import PublicContactPage from './pages/PublicContactPage'
-import RoutePlaceholder from './components/RoutePlaceholder'
-
-const userRoutes = [
-  { path: '/dashboard', title: 'Dashboard' },
-  { path: '/portfolio', title: 'Portfolio' },
-  { path: '/markets', title: 'Markets' },
-  { path: '/wallet', title: 'Wallet' },
-  { path: '/transactions', title: 'Transactions' },
-  { path: '/notifications', title: 'Notifications' },
-  { path: '/settings', title: 'Settings' },
-]
-
-const adminRoutes = [
-  { path: '/admin', title: 'Admin' },
-  { path: '/admin/users', title: 'Admin Users' },
-  { path: '/admin/accounts', title: 'Admin Accounts' },
-  { path: '/admin/tiers', title: 'Admin Tiers' },
-  { path: '/admin/markets', title: 'Admin Markets' },
-  { path: '/admin/deposits', title: 'Admin Deposits' },
-  { path: '/admin/withdrawals', title: 'Admin Withdrawals' },
-  { path: '/admin/transactions', title: 'Admin Transactions' },
-  { path: '/admin/notifications', title: 'Admin Notifications' },
-  { path: '/admin/audit-logs', title: 'Admin Audit Logs' },
-  { path: '/admin/settings', title: 'Admin Settings' },
-]
 
 function AppRouter() {
   return (
@@ -94,11 +69,6 @@ function AppRouter() {
                 <Route path="/transactions" element={<UserTransactionsPage />} />
                 <Route path="/notifications" element={<UserNotificationsPage />} />
                 <Route path="/settings" element={<UserSettingsPage />} />
-                {userRoutes.map((route) => (
-                  route.path !== '/dashboard' && route.path !== '/portfolio' && route.path !== '/markets' && route.path !== '/wallet' && route.path !== '/transactions' && route.path !== '/notifications' && route.path !== '/settings' && (
-                    <Route key={route.path} path={route.path} element={<RoutePlaceholder title={route.title} />} />
-                  )
-                ))}
               </Route>
             </Route>
             <Route element={<AdminRoute />}>
@@ -117,9 +87,6 @@ function AppRouter() {
               <Route path="/admin/audit-logs" element={<AdminAuditLogsPage />} />
               <Route path="/admin/tiers" element={<AdminTiersPage />} />
               <Route path="/admin/settings" element={<AdminSettingsPage />} />
-              {adminRoutes.filter((route) => route.path !== '/admin' && route.path !== '/admin/users' && route.path !== '/admin/accounts' && route.path !== '/admin/markets' && route.path !== '/admin/deposits' && route.path !== '/admin/withdrawals' && route.path !== '/admin/transactions' && route.path !== '/admin/notifications' && route.path !== '/admin/audit-logs' && route.path !== '/admin/tiers' && route.path !== '/admin/settings').map((route) => (
-                <Route key={route.path} path={route.path} element={<RoutePlaceholder title={route.title} />} />
-              ))}
               </Route>
             </Route>
           </Route>
