@@ -5,7 +5,7 @@ const sections: PublicDocumentSection[] = [
     title: '1. Information collected',
     paragraphs: [
       'The application stores information you provide when registering or managing your profile, which may include your name, email address, country, and optional phone number.',
-      'The application also stores authentication and account-security data needed to operate sign-in and recovery, such as password hashes, email-verification state, session and CSRF cookies, and password-reset records.',
+      'The application also stores authentication and account-security data needed to operate sign-in and recovery, such as password hashes, email-verification state, session and CSRF cookies, password-reset records, and (if enabled) an encrypted authenticator secret and protected recovery-code hashes.',
     ],
   },
   {

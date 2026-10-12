@@ -1,10 +1,15 @@
 import { useEffect, useState, type ReactNode } from 'react'
 import { ApiError, apiRequest, initializeCsrfCookie } from '../../lib/api'
 import type { AuthUser, LoginCredentials, RegistrationDetails } from '../../types/auth'
-import { AuthContext, type AuthContextValue } from './AuthContext'
+import { AuthContext, type AuthContextValue, type LoginResult } from './AuthContext'
 
 interface AuthResponse {
   user: AuthUser
+}
+
+interface TwoFactorRequiredResponse {
+  two_factor_required: true
+  message: string
 }
 
 function errorMessage(error: unknown): string {
@@ -87,8 +92,24 @@ function AuthProvider({ children }: { children: ReactNode }) {
     return currentUser
   }
 
-  async function login(credentials: LoginCredentials): Promise<AuthUser> {
-    return establishSession('/api/auth/login', credentials)
+  async function login(credentials: LoginCredentials): Promise<LoginResult> {
+    setError(null)
+    await initializeCsrfCookie()
+    const response = await apiRequest<AuthResponse | TwoFactorRequiredResponse>('/api/auth/login', {
+      method: 'POST',
+      body: JSON.stringify(credentials),
+    })
+
+    if ('two_factor_required' in response && response.two_factor_required) {
+      return { status: 'two-factor-required' }
+    }
+
+    const currentUser = await refreshUser()
+    if (!currentUser) {
+      throw new Error('The session could not be confirmed. Please try again.')
+    }
+
+    return { status: 'authenticated', user: currentUser }
   }
 
   async function register(details: RegistrationDetails): Promise<AuthUser> {
