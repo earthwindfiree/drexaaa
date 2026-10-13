@@ -244,7 +244,7 @@ function AuthPage({ mode }: { mode: AuthMode }) {
                 required
                 type="text"
                 autoComplete="one-time-code"
-                inputMode="numeric"
+                inputMode="text"
                 value={twoFactorCode}
                 onChange={(event) => {
                   setTwoFactorCode(event.target.value)
