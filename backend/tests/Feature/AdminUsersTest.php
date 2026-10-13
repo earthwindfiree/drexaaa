@@ -208,13 +208,14 @@ class AdminUsersTest extends TestCase
             ->assertJsonPath('code', 'account_suspended');
         $this->getJson('/api/auth/me')->assertOk()->assertJsonPath('user.status', 'suspended');
 
+        $this->postJson('/api/auth/logout')->assertOk();
+        Auth::forgetGuards();
+        $this->getJson('/api/auth/me')->assertUnauthorized();
+
         $this->actingAs($superAdmin)->patchJson($endpoint, ['status' => 'active'])->assertOk();
         $user->refresh();
         $this->actingAs($user)->getJson('/api/dashboard')->assertOk();
         $this->getJson('/api/deposits')->assertOk();
-        $this->postJson('/api/auth/logout')->assertOk();
-        Auth::forgetGuards();
-        $this->getJson('/api/auth/me')->assertUnauthorized();
     }
 
     public function test_super_admin_cannot_suspend_or_change_their_own_role(): void
