@@ -176,7 +176,7 @@ function LandingPage() {
                   <div className="mt-1 text-xs uppercase tracking-[0.18em] text-[var(--theme-muted)]">Tiers</div>
                 </div>
                 <div>
-                  <div className="text-2xl font-semibold text-[var(--theme-heading)]">5</div>
+                  <div className="text-2xl font-semibold text-[var(--theme-heading)]">{markets.length}</div>
                   <div className="mt-1 text-xs uppercase tracking-[0.18em] text-[var(--theme-muted)]">Assets</div>
                 </div>
               </div>
