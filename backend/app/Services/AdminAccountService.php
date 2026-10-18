@@ -39,7 +39,7 @@ class AdminAccountService
                 'tier:id,name,minimum_balance,strategy_id,description,benefits,feature_access,display_settings',
                 'tier.strategy:id,name,description,risk_profile,active',
                 'performanceSnapshots' => fn ($query) => $query
-                    ->select(['id', 'account_id', 'managed_balance', 'total_profit_loss', 'performance_percentage', 'snapshot_at'])
+                    ->select(['id', 'account_id', 'managed_balance', 'total_profit_loss', 'performance_percentage', 'snapshot_at', 'note', 'created_by'])
                     ->orderBy('snapshot_at')
                     ->orderBy('id'),
                 'transactions' => fn ($query) => $query

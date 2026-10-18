@@ -1,5 +1,6 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import { ApiError, apiRequest, initializeCsrfCookie } from '../lib/api'
+import { useAuth } from '../features/auth/AuthContext'
 import type { AdminMarketAsset, AdminMarketsResponse, AdminWallet } from '../types/api'
 
 async function fetchMarkets(): Promise<AdminMarketsResponse> {
@@ -7,6 +8,8 @@ async function fetchMarkets(): Promise<AdminMarketsResponse> {
 }
 
 function AdminMarketsPage() {
+  const { user } = useAuth()
+  const canManage = user?.role === 'super_admin'
   const [assets, setAssets] = useState<AdminMarketAsset[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -48,10 +51,11 @@ function AdminMarketsPage() {
   return (
     <section className="mx-auto max-w-7xl px-6 py-10 lg:px-8">
       <div className="mb-8"><p className="text-sm font-semibold uppercase tracking-[0.18em] text-cyan-700">Market configuration</p><h1 className="mt-2 text-3xl font-semibold tracking-tight text-slate-950">Assets and simulated markets</h1><p className="mt-2 max-w-2xl text-sm text-slate-600">Admin-controlled demo assets, stored prices, and wallet configuration. No external market or blockchain connections are used.</p></div>
+      {!canManage && <p className="mb-6 border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">Super admin required to change this.</p>}
       {loading && <p className="border border-slate-200 bg-white p-6 text-sm text-slate-600">Loading market configuration...</p>}
       {!loading && error && <div role="alert" className="mb-6 border border-rose-200 bg-rose-50 p-6 text-sm text-rose-800">{error}</div>}
       {!loading && !error && assets.length === 0 && <div className="border border-slate-200 bg-white p-10 text-center text-sm text-slate-600">No assets are configured.</div>}
-      {!loading && !error && assets.length > 0 && <div className="space-y-6">{assets.map((asset) => <AssetPanel key={asset.id} asset={asset} onRefresh={refresh} onToggleStatus={() => void updateAssetStatus(asset)} onError={setError} />)}</div>}
+      {!loading && !error && assets.length > 0 && <fieldset disabled={!canManage} className="space-y-6">{assets.map((asset) => <AssetPanel key={asset.id} asset={asset} onRefresh={refresh} onToggleStatus={() => void updateAssetStatus(asset)} onError={setError} />)}</fieldset>}
     </section>
   )
 }

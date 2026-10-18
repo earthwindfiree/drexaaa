@@ -20,6 +20,11 @@ interface CountriesResponse {
   data: CountryOption[]
 }
 
+interface TwoFactorSetupResponse {
+  secret: string
+  provisioning_uri: string
+}
+
 function UserSettingsPage() {
   const { refreshUser } = useAuth()
   const [user, setUser] = useState<AuthUser | null>(null)
@@ -43,6 +48,7 @@ function UserSettingsPage() {
   const [verificationSending, setVerificationSending] = useState(false)
   const [verificationError, setVerificationError] = useState<string | null>(null)
   const [verificationMessage, setVerificationMessage] = useState<string | null>(null)
+  const [twoFactorEnabled, setTwoFactorEnabled] = useState(false)
 
   useDocumentTitle('Settings')
 
@@ -58,6 +64,7 @@ function UserSettingsPage() {
           return
         }
         setUser(profileUser)
+        setTwoFactorEnabled(profileUser.two_factor_enabled === true)
         setProfile({
           name: profileUser.name,
           email: profileUser.email,
@@ -293,6 +300,7 @@ function UserSettingsPage() {
             onConfirmationChange={setPasswordConfirmation}
             onSubmit={updatePassword}
           />
+          <TwoFactorPanel enabled={twoFactorEnabled} onEnabledChange={setTwoFactorEnabled} />
         </>
       )}
     </section>
@@ -307,6 +315,7 @@ function SettingsField({
   type = 'text',
   autoComplete,
   optional = false,
+  idPrefix,
 }: {
   label: string
   value: string
@@ -315,8 +324,9 @@ function SettingsField({
   type?: string
   autoComplete?: string
   optional?: boolean
+  idPrefix?: string
 }) {
-  const inputId = `settings-${label.toLowerCase().replace(/\s+/g, '-')}`
+  const inputId = `${idPrefix ? `${idPrefix}-` : ''}settings-${label.toLowerCase().replace(/\s+/g, '-')}`
 
   return (
     <div className="settings-field">
@@ -445,6 +455,183 @@ function SecurityPanel({
   )
 }
 
+function TwoFactorPanel({ enabled, onEnabledChange }: { enabled: boolean; onEnabledChange: (enabled: boolean) => void }) {
+  const [currentPassword, setCurrentPassword] = useState('')
+  const [code, setCode] = useState('')
+  const [secret, setSecret] = useState<string | null>(null)
+  const [recoveryCodes, setRecoveryCodes] = useState<string[]>([])
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [message, setMessage] = useState<string | null>(null)
+
+  async function startSetup(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    setBusy(true)
+    setError(null)
+    setMessage(null)
+
+    try {
+      await initializeCsrfCookie()
+      const response = await apiRequest<TwoFactorSetupResponse>('/api/profile/two-factor/setup', {
+        method: 'POST',
+        body: JSON.stringify({ current_password: currentPassword }),
+      })
+      setSecret(response.secret)
+      setCurrentPassword('')
+      setCode('')
+    } catch (requestError: unknown) {
+      setError(validationErrorMessage(requestError, 'Unable to start two-factor setup.'))
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  async function confirmSetup(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    setBusy(true)
+    setError(null)
+    setMessage(null)
+
+    try {
+      await initializeCsrfCookie()
+      const response = await apiRequest<{ enabled: boolean; recovery_codes: string[] }>('/api/profile/two-factor/confirm', {
+        method: 'POST',
+        body: JSON.stringify({ current_password: currentPassword, code }),
+      })
+      onEnabledChange(response.enabled)
+      setRecoveryCodes(response.recovery_codes)
+      setSecret(null)
+      setCurrentPassword('')
+      setCode('')
+      setMessage('Two-factor authentication is enabled. Save these recovery codes somewhere safe; they are shown only once.')
+    } catch (requestError: unknown) {
+      setError(validationErrorMessage(requestError, 'Unable to confirm two-factor setup.'))
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  async function manageEnabledFactor(action: 'disable' | 'regenerate') {
+    setBusy(true)
+    setError(null)
+    setMessage(null)
+
+    try {
+      await initializeCsrfCookie()
+      if (action === 'disable') {
+        const response = await apiRequest<{ enabled: boolean }>('/api/profile/two-factor', {
+          method: 'DELETE',
+          body: JSON.stringify({ current_password: currentPassword, code }),
+        })
+        onEnabledChange(response.enabled)
+        setRecoveryCodes([])
+        setMessage('Two-factor authentication has been disabled.')
+      } else {
+        const response = await apiRequest<{ recovery_codes: string[] }>('/api/profile/two-factor/recovery-codes', {
+          method: 'POST',
+          body: JSON.stringify({ current_password: currentPassword, code }),
+        })
+        setRecoveryCodes(response.recovery_codes)
+        setMessage('Recovery codes regenerated. Previous recovery codes can no longer be used.')
+      }
+      setCurrentPassword('')
+      setCode('')
+    } catch (requestError: unknown) {
+      setError(validationErrorMessage(requestError, 'Unable to update two-factor authentication.'))
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  return (
+    <section className="settings-security-panel dashboard-surface">
+      <div className="settings-panel-heading">
+        <div>
+          <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-cyan-100/60">Optional sign-in protection</p>
+          <h2 className="mt-2 text-base font-medium text-white">Two-factor authentication</h2>
+          <p className="mt-1 text-xs text-slate-500">Use an authenticator app and one-time recovery codes to protect sign-ins.</p>
+        </div>
+        <span className="settings-section-mark">04</span>
+      </div>
+
+      <p className="mt-5 text-sm text-slate-300">
+        Status: <strong className={enabled ? 'text-emerald-200' : 'text-slate-300'}>{enabled ? 'Enabled' : 'Not enabled'}</strong>
+      </p>
+
+      {!enabled && !secret && (
+        <form onSubmit={(event) => void startSetup(event)} className="mt-5 grid gap-4 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-end">
+          <SettingsField
+            label="Current password"
+            type="password"
+            value={currentPassword}
+            onChange={setCurrentPassword}
+            autoComplete="current-password"
+            idPrefix="two-factor"
+          />
+          <button type="submit" className="settings-primary-button is-secondary" disabled={busy}>
+            {busy ? 'Starting setup…' : 'Set up 2FA'}
+          </button>
+        </form>
+      )}
+
+      {!enabled && secret && (
+        <div className="mt-5 space-y-5">
+          <div className="rounded-lg border border-white/[0.08] bg-black/20 p-4">
+            <p className="text-xs font-medium text-slate-300">Add this key to your authenticator app</p>
+            <code className="mt-2 block break-all font-mono text-sm tracking-[0.12em] text-cyan-100" aria-label="Authenticator setup key">{secret}</code>
+            <p className="mt-2 text-xs leading-5 text-slate-500">Choose time-based one-time passwords (TOTP), then enter the current six-digit code below.</p>
+          </div>
+          <form onSubmit={(event) => void confirmSetup(event)} className="grid gap-4 sm:grid-cols-2">
+            <SettingsField label="Current password" type="password" value={currentPassword} onChange={setCurrentPassword} autoComplete="current-password" idPrefix="two-factor" />
+            <SettingsField label="Authenticator code" value={code} onChange={setCode} autoComplete="one-time-code" idPrefix="two-factor" />
+            <div className="flex flex-wrap gap-3 sm:col-span-2">
+              <button type="submit" className="settings-primary-button" disabled={busy || !/^\d{6}$/.test(code)}>
+                {busy ? 'Verifying…' : 'Verify and enable'}
+              </button>
+              <button type="button" className="settings-secondary-button" disabled={busy} onClick={() => { setSecret(null); setCode(''); setCurrentPassword('') }}>
+                Cancel setup
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
+
+      {enabled && (
+        <div className="mt-5 space-y-4">
+          <div className="grid gap-4 sm:grid-cols-2">
+            <SettingsField label="Current password" type="password" value={currentPassword} onChange={setCurrentPassword} autoComplete="current-password" idPrefix="two-factor" />
+            <SettingsField label="Authenticator or recovery code" value={code} onChange={setCode} autoComplete="one-time-code" idPrefix="two-factor" />
+          </div>
+          <div className="flex flex-wrap gap-3">
+            <button type="button" className="settings-secondary-button" disabled={busy || !currentPassword || !code} onClick={() => void manageEnabledFactor('regenerate')}>
+              {busy ? 'Working…' : 'Regenerate recovery codes'}
+            </button>
+            <button type="button" className="settings-secondary-button" disabled={busy || !currentPassword || !code} onClick={() => void manageEnabledFactor('disable')}>
+              Disable 2FA
+            </button>
+          </div>
+        </div>
+      )}
+
+      {error && <p role="alert" className="settings-feedback is-error">{error}</p>}
+      {message && <p role="status" className="settings-feedback is-success">{message}</p>}
+
+      {recoveryCodes.length > 0 && (
+        <div className="mt-5 rounded-lg border border-amber-200/15 bg-amber-100/[0.04] p-4">
+          <h3 className="text-sm font-medium text-amber-100">Save your recovery codes</h3>
+          <p className="mt-1 text-xs leading-5 text-slate-400">Each code can be used once instead of an authenticator code. Anyone with these codes can access your account.</p>
+          <ul className="mt-4 grid grid-cols-2 gap-2 font-mono text-xs text-slate-200 sm:grid-cols-5" aria-label="Two-factor recovery codes">
+            {recoveryCodes.map((recoveryCode) => <li key={recoveryCode} className="rounded border border-white/[0.07] bg-black/20 px-2 py-2 text-center">{recoveryCode}</li>)}
+          </ul>
+          <button type="button" className="mt-4 text-xs font-medium text-cyan-200 hover:text-white" onClick={() => setRecoveryCodes([])}>
+            I have saved these codes
+          </button>
+        </div>
+      )}
+    </section>
+  )
+}
+
 function SettingsLoading() {
   return (
     <div className="settings-loading" role="status" aria-label="Loading settings">
@@ -466,6 +653,7 @@ function getProfileUser(response: unknown): AuthUser | null {
   if (candidate.country !== null && typeof candidate.country !== 'string') return null
   if (candidate.phone !== null && typeof candidate.phone !== 'string') return null
   if (candidate.email_verified_at !== null && typeof candidate.email_verified_at !== 'string') return null
+  if (candidate.two_factor_enabled !== undefined && typeof candidate.two_factor_enabled !== 'boolean') return null
 
   return candidate as AuthUser
 }

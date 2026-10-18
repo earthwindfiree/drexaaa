@@ -8,6 +8,7 @@ import { useDocumentTitle } from './hooks/useDocumentTitle'
 const navItems = [
   { label: 'Home', href: '/' },
   { label: 'How It Works', href: '#how-it-works' },
+  { label: 'Features', href: '#features' },
   { label: 'Strategies', href: '#strategies' },
   { label: 'Markets', href: '#markets' },
   { label: 'FAQ', href: '#faq' },
@@ -37,9 +38,21 @@ const markets = [
 const faqs = [
   { question: 'What is managed trading in this demo?', answer: 'This platform is a simulated managed trading experience for presentation and demo purposes only. It does not execute live trading or guarantee outcomes.' },
   { question: 'How do deposits work?', answer: 'Users deposit supported crypto to a configured wallet, submit the payment details, and wait for admin confirmation before the funds are credited to the managed balance.' },
+  { question: 'Which cryptocurrencies are supported?', answer: 'The demo showcases Bitcoin (BTC), Ethereum (ETH), Litecoin (LTC), and Tether (USDT) using simulated market data and administrator-configured wallet details.' },
+  { question: 'How do withdrawals work?', answer: 'A user submits a simulated withdrawal request, which remains pending until an administrator reviews it. Approval updates the demo account balance; the platform does not send cryptocurrency or connect to a blockchain.' },
   { question: 'How are tiers qualified?', answer: 'Tier qualification is based solely on the managed balance and uses configured thresholds defined by the platform administrator.' },
   { question: 'What is the difference between managed and pending balance?', answer: 'Pending balances represent submitted deposits or withdrawals that are awaiting review. They do not count toward the managed balance or tier qualification until approved.' },
   { question: 'Is the performance shown real?', answer: 'No. All performance figures and market data in the demo are simulated and clearly identified as such.' },
+]
+
+const platformFeatures = [
+  { title: 'Portfolio monitoring', description: 'Review a simulated account overview and balances in one demo dashboard.' },
+  { title: 'Account performance', description: 'Explore historical snapshots and performance indicators clearly marked as demo values.' },
+  { title: 'Transaction history', description: 'See recorded demo deposits, withdrawals, and account activity with review statuses.' },
+  { title: 'Deposits and withdrawals', description: 'Submit simulated requests and follow their administrator review status; no funds move.' },
+  { title: 'Strategy information', description: 'Compare administrator-configured strategy profiles, tier thresholds, and listed benefits.' },
+  { title: 'Notifications', description: 'Receive in-platform demo updates about account activity and review outcomes.' },
+  { title: 'Account security', description: 'Manage verification, password, and two-factor authentication settings for the demo account.' },
 ]
 
 const testimonials = [
@@ -52,6 +65,7 @@ function LandingPage() {
   const [strategiesLoading, setStrategiesLoading] = useState(true)
   const [strategiesError, setStrategiesError] = useState<string | null>(null)
   const [strategyRefresh, setStrategyRefresh] = useState(0)
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
   useDocumentTitle('Home')
 
@@ -82,7 +96,7 @@ function LandingPage() {
 
   return (
     <div className="public-shell text-[var(--theme-heading)]">
-      <header className="mx-auto flex max-w-7xl items-center justify-between px-6 py-6 lg:px-8">
+      <header className="relative mx-auto flex max-w-7xl items-center justify-between px-6 py-6 lg:px-8">
         <div className="flex items-center gap-3">
           <div className="public-brand-mark">M</div>
           <div>
@@ -100,13 +114,32 @@ function LandingPage() {
         </nav>
 
         <div className="flex items-center gap-3">
-          <Link to="/login" className="public-secondary-action hidden rounded-full px-4 py-2 text-sm transition sm:inline-flex">
+          <Link to="/login" className="public-secondary-action inline-flex rounded-full px-3 py-2 text-sm transition sm:px-4">
             Login
           </Link>
           <Link to="/register" className="public-primary-action inline-flex rounded-full px-4 py-2 text-sm font-medium transition">
             Get Started
           </Link>
+          <button
+            type="button"
+            aria-expanded={mobileMenuOpen}
+            aria-controls="landing-mobile-menu"
+            aria-label={mobileMenuOpen ? 'Close navigation menu' : 'Open navigation menu'}
+            onClick={() => setMobileMenuOpen((open) => !open)}
+            className="public-secondary-action inline-flex h-10 w-10 items-center justify-center rounded-full text-lg md:hidden"
+          >
+            {mobileMenuOpen ? '×' : '☰'}
+          </button>
         </div>
+        {mobileMenuOpen && (
+          <nav id="landing-mobile-menu" aria-label="Mobile navigation" className="absolute left-6 right-6 top-full z-40 grid gap-1 rounded-2xl border border-[var(--theme-border)] bg-[var(--theme-surface)] p-3 text-sm text-[var(--theme-body)] shadow-xl md:hidden">
+            {navItems.map((item) => (
+              item.href.startsWith('#')
+                ? <a key={item.label} href={item.href} onClick={() => setMobileMenuOpen(false)} className="rounded-lg px-3 py-2 transition hover:bg-white/5 hover:text-[var(--theme-heading)]">{item.label}</a>
+                : <Link key={item.label} to={item.href} onClick={() => setMobileMenuOpen(false)} className="rounded-lg px-3 py-2 transition hover:bg-white/5 hover:text-[var(--theme-heading)]">{item.label}</Link>
+            ))}
+          </nav>
+        )}
       </header>
 
       <main>
@@ -143,14 +176,15 @@ function LandingPage() {
                   <div className="mt-1 text-xs uppercase tracking-[0.18em] text-[var(--theme-muted)]">Tiers</div>
                 </div>
                 <div>
-                  <div className="text-2xl font-semibold text-[var(--theme-heading)]">5</div>
+                  <div className="text-2xl font-semibold text-[var(--theme-heading)]">{markets.length}</div>
                   <div className="mt-1 text-xs uppercase tracking-[0.18em] text-[var(--theme-muted)]">Assets</div>
                 </div>
               </div>
             </div>
 
-            <div className="relative">
-              <div className="rounded-[2rem] border border-slate-800 bg-slate-900/80 p-4 shadow-2xl shadow-slate-950/60 backdrop-blur-sm">
+            <div className="relative isolate">
+              <div className="public-market-art" aria-hidden="true" />
+              <div className="relative rounded-[2rem] border border-slate-800 bg-slate-900/80 p-4 shadow-2xl shadow-slate-950/60 backdrop-blur-sm">
                 <div className="rounded-[1.5rem] border border-slate-800 bg-slate-950 p-5">
                   <div className="flex items-center justify-between">
                     <div>
@@ -280,6 +314,11 @@ function LandingPage() {
                   <div className="mt-4 text-2xl font-semibold text-[var(--theme-heading)]">{formatMinimum(strategy.tiers[0]?.minimum_balance)}</div>
                   <p className="mt-3 text-sm text-[var(--theme-body)]">{strategy.description}</p>
                   <p className="mt-4 text-sm leading-6 text-[var(--theme-muted)]">{strategy.risk_profile} profile</p>
+                  {strategy.tiers[0]?.benefits && strategy.tiers[0].benefits.length > 0 && (
+                    <ul className="mt-4 space-y-2 text-sm text-[var(--theme-body)]">
+                      {strategy.tiers[0].benefits.slice(0, 3).map((benefit) => <li key={benefit} className="flex gap-2"><span className="text-[var(--theme-accent)]" aria-hidden="true">✓</span>{benefit}</li>)}
+                    </ul>
+                  )}
                   <Link to={`/strategies/${strategy.id}`} className="mt-5 inline-flex rounded-full border border-[var(--theme-border)] px-4 py-2 text-sm text-[var(--theme-heading)] transition hover:border-[rgba(129,201,195,0.25)] hover:bg-[rgba(129,201,195,0.05)]">
                     View Details
                   </Link>
@@ -308,6 +347,22 @@ function LandingPage() {
                 <div className="mt-6 text-3xl font-semibold text-[var(--theme-heading)]">{market.price}</div>
                 <div className="mt-5 h-20 rounded-xl bg-gradient-to-r from-[rgba(24,31,34,0.95)] via-[rgba(18,25,28,0.92)] to-[rgba(129,201,195,0.18)]" />
               </div>
+            ))}
+          </div>
+        </section>
+
+        <section id="features" className="mx-auto max-w-7xl px-6 py-12 lg:px-8">
+          <div className="mb-10">
+            <p className="public-kicker mb-3 inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-xs font-medium uppercase tracking-[0.22em]">Platform Features</p>
+            <h2 className="mt-3 text-3xl font-semibold text-[var(--theme-heading)]">A complete simulated account experience.</h2>
+            <p className="mt-3 max-w-2xl text-sm leading-6 text-[var(--theme-muted)]">Explore presentation-only tools for account visibility and administration. All balances, activity, and performance are demo data; no live trading or transfers occur.</p>
+          </div>
+          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+            {platformFeatures.map((feature) => (
+              <article key={feature.title} className="public-card p-5">
+                <h3 className="text-lg font-semibold text-[var(--theme-heading)]">{feature.title}</h3>
+                <p className="mt-2 text-sm leading-6 text-[var(--theme-muted)]">{feature.description}</p>
+              </article>
             ))}
           </div>
         </section>

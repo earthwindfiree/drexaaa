@@ -6,8 +6,9 @@
 .public-shell {
   min-height: 100vh;
   background:
-    radial-gradient(ellipse at 78% 0%, rgba(129, 201, 195, 0.12), transparent 33%),
-    linear-gradient(130deg, var(--theme-background) 0%, var(--theme-background-deep) 52%, #0c1114 100%);
+    radial-gradient(ellipse at 78% 0%, rgba(129, 201, 195, 0.14), transparent 33%),
+    radial-gradient(ellipse at 8% 58%, rgba(52, 102, 105, 0.08), transparent 36%),
+    linear-gradient(130deg, #0c1215 0%, var(--theme-background-deep) 52%, #0c1114 100%);
 }
 
 .public-shell .border-slate-800 {
@@ -83,9 +84,11 @@
 
 .public-card,
 .public-info-card {
-  border: 1px solid var(--theme-border);
-  background: linear-gradient(145deg, rgba(24, 31, 34, 0.92), rgba(16, 21, 24, 0.97));
-  box-shadow: 0 16px 42px rgba(0, 0, 0, 0.14);
+  border: 1px solid rgba(153, 197, 194, 0.14);
+  background:
+    radial-gradient(ellipse at 100% 0%, rgba(129, 201, 195, 0.055), transparent 48%),
+    linear-gradient(145deg, rgba(27, 37, 39, 0.96), rgba(15, 21, 24, 0.98));
+  box-shadow: 0 18px 44px rgba(0, 0, 0, 0.2), inset 0 1px rgba(255, 255, 255, 0.025);
 }
 
 .public-card {
@@ -96,9 +99,20 @@
   border-radius: 1.5rem;
 }
 
+.public-market-art {
+  position: absolute;
+  inset: -7% -8% -7% 8%;
+  z-index: -1;
+  background: url('/market-illustration.svg') center / contain no-repeat;
+  opacity: 0.54;
+  pointer-events: none;
+}
+
 .public-surface {
   border: 1px solid var(--theme-border);
-  background: linear-gradient(140deg, rgba(19, 25, 28, 0.94), rgba(10, 14, 17, 0.96));
+  background:
+    radial-gradient(ellipse at 100% 0%, rgba(129, 201, 195, 0.045), transparent 48%),
+    linear-gradient(140deg, rgba(22, 30, 32, 0.97), rgba(10, 14, 17, 0.98));
 }
 
 .public-muted {
@@ -126,7 +140,9 @@
 .admin-shell .bg-white,
 .admin-shell .bg-slate-50,
 .admin-shell .bg-slate-100 {
-  background: linear-gradient(145deg, rgba(24, 31, 34, 0.92), rgba(16, 21, 24, 0.97));
+  background:
+    radial-gradient(ellipse at 100% 0%, rgba(129, 201, 195, 0.045), transparent 48%),
+    linear-gradient(145deg, rgba(27, 37, 39, 0.96), rgba(15, 21, 24, 0.98));
 }
 
 .admin-shell .bg-slate-200 {
@@ -837,10 +853,12 @@
 
 .dashboard-surface {
   position: relative;
-  border: 1px solid rgba(220, 239, 238, 0.085);
+  border: 1px solid rgba(153, 197, 194, 0.14);
   border-radius: 8px;
-  background: linear-gradient(145deg, rgba(24, 31, 34, 0.91), rgba(16, 21, 24, 0.96));
-  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.14), inset 0 1px rgba(255, 255, 255, 0.025);
+  background:
+    radial-gradient(ellipse at 100% 0%, rgba(129, 201, 195, 0.055), transparent 48%),
+    linear-gradient(145deg, rgba(27, 37, 39, 0.96), rgba(15, 21, 24, 0.98));
+  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.18), inset 0 1px rgba(255, 255, 255, 0.03);
 }
 
 .dashboard-hover {

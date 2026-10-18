@@ -58,6 +58,10 @@ Route::middleware(['auth:sanctum', EnsureVerifiedUser::class])->group(function (
     Route::get('/profile', [AuthController::class, 'me']);
     Route::patch('/profile', [AuthController::class, 'updateProfile'])->middleware('throttle:6,1');
     Route::patch('/profile/password', [AuthController::class, 'updatePassword'])->middleware('throttle:6,1');
+    Route::post('/profile/two-factor/setup', [AuthController::class, 'setupTwoFactor'])->middleware('throttle:6,1');
+    Route::post('/profile/two-factor/confirm', [AuthController::class, 'confirmTwoFactor'])->middleware('throttle:6,1');
+    Route::post('/profile/two-factor/recovery-codes', [AuthController::class, 'regenerateTwoFactorRecoveryCodes'])->middleware('throttle:6,1');
+    Route::delete('/profile/two-factor', [AuthController::class, 'disableTwoFactor'])->middleware('throttle:6,1');
     Route::get('/dashboard', [UserAccountController::class, 'dashboard']);
     Route::get('/portfolio', [UserAccountController::class, 'portfolio']);
     Route::get('/markets', [UserMarketsController::class, 'index']);
@@ -79,6 +83,7 @@ Route::prefix('admin')->middleware(['auth:sanctum', 'can:admin'])->group(functio
     Route::get('/accounts', [AdminAccountsController::class, 'index']);
     Route::get('/accounts/{account}', [AdminAccountsController::class, 'show']);
     Route::patch('/accounts/{account}/simulation', [AdminAccountsController::class, 'updateSimulation']);
+    Route::post('/accounts/{account}/snapshots', [AdminAccountsController::class, 'createSnapshot']);
     Route::get('/users', [AdminUsersController::class, 'index']);
     Route::patch('/users/{user}/access', [AdminUsersController::class, 'updateAccess']);
     Route::get('/markets', [AdminMarketsController::class, 'index']);

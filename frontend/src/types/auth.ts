@@ -7,11 +7,13 @@ export interface AuthUser {
   role: string
   status: string
   email_verified_at: string | null
+  two_factor_enabled?: boolean
 }
 
 export interface LoginCredentials {
   email: string
   password: string
+  two_factor_code?: string
 }
 
 export interface RegistrationDetails extends LoginCredentials {
