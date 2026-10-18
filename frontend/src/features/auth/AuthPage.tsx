@@ -41,6 +41,8 @@ function AuthPage({ mode }: { mode: AuthMode }) {
   const [fieldErrors, setFieldErrors] = useState<Record<string, string[]>>({})
   const [formError, setFormError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
+  const [twoFactorRequired, setTwoFactorRequired] = useState(false)
+  const [twoFactorCode, setTwoFactorCode] = useState('')
 
   useEffect(() => {
     if (!isRegister) return
@@ -73,8 +75,8 @@ function AuthPage({ mode }: { mode: AuthMode }) {
     setSubmitting(true)
 
     try {
-      const sessionUser = isRegister
-        ? await register({
+      if (isRegister) {
+        const sessionUser = await register({
           name: form.name,
           email: form.email,
           password: form.password,
@@ -82,9 +84,24 @@ function AuthPage({ mode }: { mode: AuthMode }) {
           country: form.country,
           phone: form.phone || undefined,
         })
-        : await login({ email: form.email, password: form.password })
 
-      navigate(sessionUser.role === 'admin' || sessionUser.role === 'super_admin' ? '/admin' : '/dashboard', { replace: true })
+        navigate(sessionUser.role === 'admin' || sessionUser.role === 'super_admin' ? '/admin' : '/dashboard', { replace: true })
+        return
+      }
+
+      const result = await login({
+        email: form.email,
+        password: form.password,
+        ...(twoFactorRequired ? { two_factor_code: twoFactorCode } : {}),
+      })
+
+      if (result.status === 'two-factor-required') {
+        setTwoFactorRequired(true)
+        setFormError(null)
+        return
+      }
+
+      navigate(result.user.role === 'admin' || result.user.role === 'super_admin' ? '/admin' : '/dashboard', { replace: true })
     } catch (requestError) {
       if (requestError instanceof ApiError) {
         setFieldErrors(requestError.errors)
@@ -216,6 +233,43 @@ function AuthPage({ mode }: { mode: AuthMode }) {
             />
             {fieldError('password') && <span className="mt-1 block text-xs text-rose-300">{fieldError('password')}</span>}
           </label>
+
+          {!isRegister && twoFactorRequired && (
+            <div>
+              <label className="block text-sm font-medium text-slate-200" htmlFor="two-factor-code">
+                Authenticator or recovery code
+              </label>
+              <input
+                id="two-factor-code"
+                required
+                type="text"
+                autoComplete="one-time-code"
+                inputMode="text"
+                value={twoFactorCode}
+                onChange={(event) => {
+                  setTwoFactorCode(event.target.value)
+                  setFieldErrors((current) => ({ ...current, two_factor_code: [] }))
+                  setFormError(null)
+                }}
+                className={inputClassName}
+                aria-invalid={Boolean(fieldErrors.two_factor_code?.[0])}
+                aria-describedby={fieldErrors.two_factor_code?.[0] ? 'two-factor-code-error' : undefined}
+              />
+              {fieldErrors.two_factor_code?.[0] && <span id="two-factor-code-error" className="mt-1 block text-xs text-rose-300">{fieldErrors.two_factor_code[0]}</span>}
+              <button
+                type="button"
+                className="mt-2 text-xs font-medium text-cyan-300 hover:text-cyan-200"
+                onClick={() => {
+                  setTwoFactorRequired(false)
+                  setTwoFactorCode('')
+                  setFieldErrors({})
+                  setFormError(null)
+                }}
+              >
+                Return to password sign-in
+              </button>
+            </div>
+          )}
 
           {isRegister && (
             <label className="block text-sm font-medium text-slate-200">

@@ -61,7 +61,7 @@ class AdminUsersController extends Controller
         $allowedFields = ['role', 'status'];
 
         if (array_diff(array_keys($request->all()), $allowedFields) !== []) {
-            throw ValidationException::withMessages(['user' => ['Only role and admin account status may be changed.']]);
+            throw ValidationException::withMessages(['user' => ['Only role and account status may be changed.']]);
         }
 
         $changes = $request->validate([

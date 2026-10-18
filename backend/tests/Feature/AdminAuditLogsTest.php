@@ -90,6 +90,15 @@ class AdminAuditLogsTest extends TestCase
         $this->assertSame($count, AuditLog::count());
     }
 
+    public function test_audit_logs_reject_mutating_http_methods(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+
+        foreach (['putJson', 'patchJson', 'deleteJson'] as $method) {
+            $this->actingAs($admin)->{$method}('/api/admin/audit-logs', [])->assertMethodNotAllowed();
+        }
+    }
+
     private function createAuditLog(string $action = 'market_price.updated'): AuditLog
     {
         $actor = User::factory()->create(['name' => 'Audit Actor', 'email' => fake()->unique()->safeEmail(), 'role' => 'admin']);

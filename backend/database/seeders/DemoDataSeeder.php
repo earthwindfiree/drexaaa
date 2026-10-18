@@ -17,6 +17,7 @@ use App\Models\UserNotification;
 use App\Models\Withdrawal;
 use App\Services\TierCalculator;
 use Illuminate\Database\Seeder;
+use RuntimeException;
 
 class DemoDataSeeder extends Seeder
 {
@@ -53,12 +54,27 @@ class DemoDataSeeder extends Seeder
             'country' => 'US',
             'phone' => null,
             'email_verified_at' => now()->subMonths(2),
-            'password' => 'DemoPass123!',
+            'password' => $this->demoPassword(),
             'role' => $role,
             'status' => 'active',
         ])->save();
 
         return $user;
+    }
+
+    private function demoPassword(): string
+    {
+        $password = env('DEMO_SEED_PASSWORD');
+
+        if ($password !== null) {
+            return $password;
+        }
+
+        if (! app()->isProduction()) {
+            return 'DemoPass123!';
+        }
+
+        throw new RuntimeException('DEMO_SEED_PASSWORD must be set before seeding demo data in production.');
     }
 
     private function demoUser(
@@ -139,6 +155,12 @@ class DemoDataSeeder extends Seeder
             'updated_at' => $createdAt,
         ])->save();
 
+        if ($status === DepositStatus::Pending) {
+            Transaction::query()->where('deposit_id', $deposit->id)->delete();
+
+            return;
+        }
+
         $transaction = Transaction::query()->firstOrNew(['deposit_id' => $deposit->id]);
         $transaction->forceFill([
             'user_id' => $account->user_id,
@@ -189,6 +211,12 @@ class DemoDataSeeder extends Seeder
             'created_at' => $createdAt,
             'updated_at' => $createdAt,
         ])->save();
+
+        if ($status === WithdrawalStatus::Pending) {
+            Transaction::query()->where('withdrawal_id', $withdrawal->id)->delete();
+
+            return;
+        }
 
         $transaction = Transaction::query()->firstOrNew(['withdrawal_id' => $withdrawal->id]);
         $transaction->forceFill([

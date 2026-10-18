@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\Account;
+use App\Models\AuditLog;
 use App\Models\PerformanceSnapshot;
 use App\Models\User;
 use App\Services\AccountBalanceService;
@@ -37,6 +38,46 @@ class PerformanceSnapshotTest extends TestCase
         $this->assertSame('2.3750', $snapshot->performance_percentage);
         $this->assertTrue($snapshot->account->is($account));
         $this->assertTrue($snapshot->snapshot_at->equalTo($snapshotAt));
+    }
+
+    public function test_admin_snapshot_endpoint_is_super_admin_only_validated_and_audited(): void
+    {
+        $account = $this->createAccount();
+        $snapshotAt = now()->subDay()->startOfSecond()->toISOString();
+        $endpoint = '/api/admin/accounts/'.$account->id.'/snapshots';
+        $payload = [
+            'managed_balance' => '1234.50',
+            'total_profit_loss' => '-34.50',
+            'performance_percentage' => '-2.3750',
+            'snapshot_at' => $snapshotAt,
+            'note' => 'Reviewed monthly values',
+        ];
+
+        $this->actingAs(User::factory()->create(['role' => 'admin']))
+            ->postJson($endpoint, $payload)
+            ->assertForbidden();
+
+        $superAdmin = User::factory()->create(['role' => 'super_admin']);
+        $response = $this->actingAs($superAdmin)
+            ->postJson($endpoint, $payload)
+            ->assertCreated()
+            ->assertJsonPath('data.account_id', $account->id)
+            ->assertJsonPath('data.managed_balance', '1234.50')
+            ->assertJsonPath('data.note', 'Reviewed monthly values')
+            ->assertJsonPath('data.created_by', $superAdmin->id);
+
+        $this->assertDatabaseHas('audit_logs', [
+            'actor_id' => $superAdmin->id,
+            'action' => 'performance_snapshot.created',
+            'entity_type' => PerformanceSnapshot::class,
+            'entity_id' => $response->json('data.id'),
+        ]);
+
+        $this->postJson($endpoint, $payload)->assertUnprocessable()
+            ->assertJsonValidationErrors('snapshot_at');
+        $this->postJson($endpoint, array_merge($payload, ['snapshot_at' => now()->subHours(2)->toISOString(), 'managed_balance' => '1.001']))
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('managed_balance');
     }
 
     public function test_later_account_changes_do_not_change_historical_snapshots_or_current_state(): void

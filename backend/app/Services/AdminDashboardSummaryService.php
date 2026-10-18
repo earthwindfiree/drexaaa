@@ -35,11 +35,9 @@ class AdminDashboardSummaryService
 
     private function moneySum(string $column): string
     {
-        return FixedDecimalMath::normalize(
-            (string) (Account::query()->sum($column) ?: '0'),
-            18,
-            2,
-            $column,
+        return Account::query()->pluck($column)->reduce(
+            fn (string $sum, string $value): string => FixedDecimalMath::add($sum, $value, 18, 2),
+            '0.00',
         );
     }
 }
